@@ -1,0 +1,72 @@
+apiVersion: mongodb.com/v1
+kind: MongoDB
+metadata:
+  name: rsbackup
+  namespace: mongodb
+spec:
+  members: 3
+  version: "8.0.6-ent"
+  credentials: organization-secret
+  type: ReplicaSet
+  featureCompatibilityVersion: "8.0"
+  persistent: true
+
+  opsManager:
+    configMapRef:
+      name: rsbackup  # Must match metadata.name in ConfigMap file
+
+  security:
+    certsSecretPrefix: "bkp"
+    authentication:
+      enabled: true
+      ignoreUnknownUsers: true   ## Disable authoritativeSet to False (Enforce Consistent Set)
+      modes:
+      - "X509"
+      - "SCRAM"
+      internalCluster: "X509"
+      agents:
+        mode: "X509"
+    tls:
+      ca: "custom-ca"
+
+  podSpec:
+    podTemplate:
+      metadata:
+        labels:
+          name: rsbackup
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.2.0' ##MCK
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              memory: 750Mi
+
+    persistence:
+      single:
+        storage: 15Gi
+
+  statefulSet:
+    spec:
+      serviceName: rsbackup-svc
+  #    podTemplate:
+  #      spec:
+  #        containers:
+  #        - name: mongodb-enterprise-database
+  #          readinessProbe:
+  #            exec:
+  #              command:
+  #              - /bin/true
+  #            failureThreshold: 40
+  #            initialDelaySeconds: 5
+  #            periodSeconds: 10
+  #            successThreshold: 1
+  #            timeoutSeconds: 100
+  additionalMongodConfig:
+    net:
+      tls:
+        mode: requireTLS
+---

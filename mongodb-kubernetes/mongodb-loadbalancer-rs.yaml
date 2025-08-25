@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rsbackup-svc-ext
+  namespace: mongodb
+  labels:
+    app: rsbackup-svc
+    controller: mongodb-enterprise-operator
+    mongodb.com/v1.mongodbResourceOwner: rsbackup
+spec:
+  allocateLoadBalancerNodePorts: true
+  sessionAffinity: None
+  publishNotReadyAddresses: true
+  type: LoadBalancer
+  ports:
+    - name: mongodb
+      nodePort: 32191
+      port: 27017
+      targetPort: 27017
+      protocol: TCP
+  selector:
+    app: rsbackup-svc
+    controller: mongodb-enterprise-operator

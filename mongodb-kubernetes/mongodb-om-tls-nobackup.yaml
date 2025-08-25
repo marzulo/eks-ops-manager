@@ -1,0 +1,54 @@
+apiVersion: mongodb.com/v1
+kind: MongoDBOpsManager
+metadata:
+  name: ops-manager
+  namespace: mongodb
+spec:
+  topology: SingleCluster
+  replicas: 1
+  version: 8.0.6
+  adminCredentials: adminusercredentials
+
+  #externalConnectivity:
+  #  type: LoadBalancer
+
+  security:
+    certsSecretPrefix: "om"
+    tls:
+      ca: "ca-issuer"
+
+  applicationDatabase:
+    featureCompatibilityVersion: "8.0"
+    members: 3
+    passwordSecretKeyRef:
+      key: password
+      name: opsmanagereks-db-om-password
+    topology: SingleCluster
+    version: 8.0.6-ent
+    security:
+      certsSecretPrefix: "appdb"
+      tls:
+        ca: "ca-issuer"
+
+  backup:
+    enabled: false
+
+  configuration:
+    mms.ignoreInitialUiSetup: "true"
+    mms.centralUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
+    mms.adminEmailAddr: a@b.com
+    mms.fromEmailAddr: a@b.com
+    mms.mail.hostname: mailpit-svc-ext.mailpit.svc.cluster.local
+    #mms.mail.user: apikey
+    #mms.mail.password: randomcharstring
+    mms.mail.port: "1025"
+    mms.mail.ssl: "false"
+    mms.mail.transport: smtp
+    mms.minimumTLSVersion: TLSv1.2
+    mms.replyToEmailAddr: a@b.com
+    mms.security.allowCORS: "false"
+    mms.mongoDbUsage.defaultUsageType: DEV_SERVER
+    mms.featureFlag.disableDiscoveryIpAddressAliases: "enabled"
+    mongodb.release.autoDownload.enterprise: "true"
+    #automation.versions.source: mongodb
+---

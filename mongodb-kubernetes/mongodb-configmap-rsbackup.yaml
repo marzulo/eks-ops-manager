@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rsbackup
+  namespace: mongodb
+data:
+  baseUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
+  projectName: rsbackup
+  orgId: 68ac886ce56a970c5ffbe114
+  sslMMSCAConfigMap: ca-issuer
+  tlsRequireValidMMSServerCertificates: 'false'
+  sslRequireValidMMSServerCertificates: 'false'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: organization-secret
+  namespace: mongodb
+stringData:
+  publicKey: mxjohyab
+  privateKey: 629a9b7b-81f5-49ed-870f-aaf60ca6b2c5
+---

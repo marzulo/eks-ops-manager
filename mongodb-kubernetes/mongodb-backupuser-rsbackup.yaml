@@ -1,0 +1,29 @@
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: backupuser
+spec:
+  username: backupuser
+  db: "admin"
+  passwordSecretKeyRef:
+      key: password
+      name: opsmanagereks-db-om-password # mongod123XMONGOD123x
+  mongodbResourceRef:
+    name: rsbackup
+  roles:
+  - db: "admin"
+    name: "clusterAdmin"
+  - db: "admin"
+    name: "backup"
+  - db: "admin"
+    name: "dbAdminAnyDatabase"
+  - db: "admin"
+    name: "hostManager"
+  - db: "admin"
+    name: "restore"
+  - db: "admin"
+    name: "root"
+  - db: "admin"
+    name: "readWriteAnyDatabase"
+---

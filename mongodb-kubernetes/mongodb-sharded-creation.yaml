@@ -1,0 +1,172 @@
+apiVersion: mongodb.com/v1
+kind: MongoDB
+metadata:
+  name: mongodb-sharded
+  namespace: mongodb
+spec:
+  agent:
+    startupOptions:
+      dialTimeoutSeconds: "40"
+      maxLogFiles: "30"
+
+  backup:
+    mode: enabled
+    snapshotSchedule:
+      clusterCheckpointIntervalMin: 60
+      dailySnapshotRetentionDays: 1
+      fullIncrementalDayOfWeek: "SUNDAY" 
+      monthlySnapshotRetentionMonths: 0
+      pointInTimeWindowHours: 1
+      snapshotIntervalHours: 24
+      snapshotRetentionDays: 1
+      weeklySnapshotRetentionWeeks: 0
+
+  configServerCount: 1
+  configSrv:
+    additionalMongodConfig:
+      systemLog:
+        quiet: true
+  configSrvPodSpec:
+    persistence:
+      single:
+        storage: 8Gi
+        storageClass: efs-sc
+    podTemplate:
+      metadata:
+        labels:
+          env: sharded
+          group: shared
+          type: infra
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          resources:
+            limits:
+              cpu: 300m
+              memory: 1G
+            requests:
+              cpu: 60m
+              memory: 600M
+  credentials: organization-secret
+  mongodsPerShardCount: 3
+  mongos:
+    additionalMongodConfig:
+      systemLog:
+        quiet: true
+  mongosCount: 1
+  mongosPodSpec:
+    podTemplate:
+      metadata:
+        labels:
+          env: sharded
+          group: shared
+          type: infra
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          resources:
+            limits:
+              cpu: 2
+              memory: 2G
+            requests:
+              cpu: 2
+              memory: 2G
+  opsManager:
+    configMapRef:
+      name: mongodb-sharded-configmap
+  persistent: true
+  podSpec:
+    persistence:
+      single:
+        storage: 10Gi
+    podTemplate:
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          resources:
+            limits:
+              cpu: 2
+              memory: 1.5G
+            requests:
+              cpu: 1
+              memory: 1G
+        terminationGracePeriodSeconds: 10
+        topologySpreadConstraints:
+        - labelSelector: null
+          matchLabels:
+            foo: bar
+          maxSkew: 1
+          topologyKey: zone
+          whenUnsatisfiable: DoNotSchedule
+  security:
+    authentication:
+      enabled: true
+      ignoreUnknownUsers: true
+      modes:
+      - SCRAM
+  shard:
+    additionalMongodConfig:
+      storage:
+        directoryPerDB: true
+      systemLog:
+        quiet: true
+  shardCount: 1
+  shardPodSpec:
+    persistence:
+      multiple:
+        data:
+          storage: 16Gi
+          storageClass: efs-sc
+        journal:
+          storage: 8Gi
+          storageClass: efs-sc
+        logs:
+          storage: 8Gi
+          storageClass: efs-sc
+    podTemplate:
+      metadata:
+        labels:
+          env: sharded
+          group: shared
+          type: infra
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2G
+            requests:
+              cpu: "2"
+              memory: 2G
+  type: ShardedCluster
+  version: 7.0.22-ent
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: backupusersharded
+spec:
+  username: backupuser
+  db: "admin"
+  passwordSecretKeyRef:
+      key: password
+      name: opsmanagereks-db-om-password # mongod123XMONGOD123x
+  mongodbResourceRef:
+    name: mongodb-sharded
+  roles:
+  - db: "admin"
+    name: "clusterAdmin"
+  - db: "admin"
+    name: "backup"
+  - db: "admin"
+    name: "dbAdminAnyDatabase"
+  - db: "admin"
+    name: "hostManager"
+  - db: "admin"
+    name: "restore"
+  - db: "admin"
+    name: "root"
+  - db: "admin"
+    name: "readWriteAnyDatabase"
+---
