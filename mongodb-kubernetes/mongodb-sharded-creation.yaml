@@ -13,7 +13,7 @@ spec:
     mode: enabled
     snapshotSchedule:
       clusterCheckpointIntervalMin: 60
-      dailySnapshotRetentionDays: 1
+      dailySnapshotRetentionDays: 2
       fullIncrementalDayOfWeek: "SUNDAY" 
       monthlySnapshotRetentionMonths: 0
       pointInTimeWindowHours: 1
@@ -141,6 +141,13 @@ spec:
               memory: 2G
   type: ShardedCluster
   version: 7.0.22-ent
+
+  externalAccess:
+    externalService:
+      spec:
+        type: LoadBalancer
+        publishNotReadyAddress: true
+        port: 27017
 ---
 apiVersion: mongodb.com/v1
 kind: MongoDBUser

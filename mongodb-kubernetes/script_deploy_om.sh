@@ -22,50 +22,27 @@ kubectl create secret tls appdb-ops-manager-db-cert --cert=tls/RS-test-server1.c
 kubectl create configmap ca-issuer --from-file=ca-pem=tls/test-CA.pem --from-file=mms-ca.crt=tls/mms-ca.crt
 echo "Deploying OM - No Backup"
 kubectl apply -f mongodb-om-tls-nobackup.yaml
-echo "Wait 12 minutes at least to create the Load Balancer"
-sleep 60
+echo "Wait some minutes to create the Load Balancer"
+kubectl wait --for=condition=Ready pod/ops-manager-0 --timeout=600s
+if [ $? -eq 0 ]; then
+  echo "om-tls-nobackup deployed"
+else
+  echo "om-tls-nobackup not deployed yet waiting a little bit more"
+  kubectl get pods -A
+  kubectl describe om ops-manager
+  kubectl describe pod ops-manager-0
+  kubectl wait --for=condition=Ready pod/ops-manager-0 --timeout=600s
+  if [ $? -eq 0 ]; then
+    echo "om-tls-nobackup deployed"
+  else
+    echo "om-tls-nobackup not deployed - unknown error"
+    exit 1
+  fi
+fi
 kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "Deploying Service Loadbalancer for OM"
-kubectl apply -f mongodb-loadbalancer-om.yaml
-sleep 60
 kubectl get svc
-sleep 60
-kubectl get svc
-sleep 60
-kubectl get svc
+#echo "Deploying Service Loadbalancer for OM"
+#kubectl apply -f mongodb-loadbalancer-om.yaml
 echo "Configuring RS for Backup Configuration"
 kubectl create secret tls bkp-rsbackup-cert --cert=tls/RS-rsbackup.crt --key=tls/RS-test-server.key
 kubectl create secret tls bkp-rsbackup-agent-certs --cert=tls/RS-rsbkpagent.crt --key=tls/RS-test-server.key
@@ -94,43 +71,37 @@ sed -i "/  privateKey:/c\  privateKey: ${privateKey}" mongodb-configmap-rsbackup
 sed -i "/  orgId:/c\  orgId: ${orgid}" mongodb-configmap-sharded.yaml
 echo "Applying Configmap for rsbackup"
 kubectl apply -f mongodb-configmap-rsbackup.yaml
+echo "Applying Configmap for sharded"
+kubectl apply -f mongodb-configmap-sharded.yaml
 echo "Rollout rsbackup"
 kubectl apply -f mongodb-rsbackupcreation.yaml
-echo "Wait 8 minutes at least to create the Load Balancer for rsbackup"
 sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
-kubectl get pods -A
-echo "#################################################"
-sleep 60
+statusstsrs=`kubectl get sts rsbackup -o json | jq -r '.status.availableReplicas'`
+if [ $statusstsrs -eq 3 ]; then
+  echo "rsbackup deployed"
+else
+  echo "rsbackup not deployed yet waiting a little bit more"
+  kubectl get pods -A
+  kubectl describe mdb rsbackup
+  kubectl describe pod rsbackup-0
+  kubectl describe sts rsbackup
+  sleep 60
+  statusstsrs=`kubectl get sts rsbackup -o json | jq -r '.status.availableReplicas'`
+  if [ $statusstsrs -eq 3 ]; then
+    echo "rsbackup deployed"
+  else
+    echo "rsbackup not deployed - unknown error"
+    exit 1
+  fi
+fi
 kubectl get pods -A
 echo "Create Backup SCRAM user"
 kubectl apply -f mongodb-backupuser-rsbackup.yaml
-echo "Deploying Service Loadbalancer for rsbackup"
-kubectl apply -f mongodb-loadbalancer-rs.yaml
-sleep 60
-kubectl get svc
-sleep 60
-kubectl get svc
+#echo "Deploying Service Loadbalancer for rsbackup"
+#kubectl apply -f mongodb-loadbalancer-rs.yaml
 echo "Ready to enable backup on OM"
 ### IF LOCAL uses this command: lbrssvcurl="127.0.0.1"
-lbrssvcurl=`kubectl get svc rsbackup-svc-ext -o json | jq -r '.status.loadBalancer.ingress[0].hostname'`
+lbrssvcurl=`kubectl get svc rsbackup-0-svc-external -o json | jq -r '.status.loadBalancer.ingress[0].hostname'`
 mongoshurl="mongodb://backupuser:mongod123XMONGOD123x@${lbrssvcurl}:27017/?directConnection=true&tls=true&tlsCAFile=tls%2Ftest-CA.pem&tlsCertificateKeyFile=tls%2Ftest-rsbackup.pem&tlsAllowInvalidCertificates=true&replicaSet=rsbackup"
 #mongoshurl="mongodb://backupuser:mongod123XMONGOD123x@rsbackup-0.rsbackup-svc.mongodb.svc.cluster.local:27017,rsbackup-1.rsbackup-svc.mongodb.svc.cluster.local:27017,rsbackup-2.rsbackup-svc.mongodb.svc.cluster.local:27017/?tls=true&tlsCAFile=%2Fvar%2Flib%2Fmongodb-automation%2Fsecrets%2Fca%2Fca-pem&tlsCertificateKeyFile=%2Fvar%2Flib%2Fmongodb-automation%2Fsecrets%2Fcerts%2F4YC56MIGOP3NPFN5S4OMSJ3HEESFCKY7O2DJ7EQUVHXHBAIWY2VA&tlsAllowInvalidCertificates=true&replicaSet=rsbackup"
 
@@ -141,8 +112,23 @@ echo "String to connect into rsbackup"
 echo $mongoshurl
 echo "Enabling Backup on OM"
 kubectl apply -f mongodb-om-tls-backup.yaml
+kubectl wait --for=condition=Ready pod/ops-manager-backup-daemon-0 --timeout=300s
+if [ $? -eq 0 ]; then
+  echo "ops-manager-backup-daemon-0 deployed"
+else
+  echo "ops-manager-backup-daemon-0 not deployed yet waiting a little bit more"
+  kubectl get pods -A
+  kubectl describe om ops-manager
+  kubectl describe pod ops-manager-backup-daemon-0
+  kubectl wait --for=condition=Ready pod/ops-manager-backup-daemon-0 --timeout=60s
+  if [ $? -eq 0 ]; then
+    echo "ops-manager-backup-daemon-0 deployed"
+  else
+    echo "ops-manager-backup-daemon-0 not deployed - unknown error"
+    exit 1
+  fi
+fi
 kubectl get pods
 echo "Finish"
-
-#mongoshurlsharded="mongodb://backupusergreen:mongod123XMONGOD123x@af94e176776fc41d1a2c9c304be67fb6-2081289291.eu-west-1.elb.amazonaws.com:27017/?directConnection=true&authMechanism=SCRAM-SHA-256&authSource=admin"
-
+# mongoshurlsharded="mongodb://backupuser:mongod123XMONGOD123x@a76b2640b4832415095a5deb87ff5fd6-512507417.eu-west-1.elb.amazonaws.com:27017/?directConnection=true&authMechanism=SCRAM-SHA-256&authSource=admin"
+#kubectl apply -f mongodb-sharded-creation.yaml

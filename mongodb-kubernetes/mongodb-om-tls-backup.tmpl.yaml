@@ -42,41 +42,23 @@ spec:
     - name: s3oplog
       irsaEnabled: true
       pathStyleAccessEnabled: true
-      s3BucketEndpoint: "https://s3.eu-west-1.amazonaws.com"
-      s3BucketName: "marzulo-opsmanager"
+      s3BucketEndpoint: ${s3BucketEndpoint}
+      s3BucketName: ${s3BucketName}
       mongodbResourceRef:
         name: rsbackup
       mongodbUserRef:
         name: backupuser
-    #- name: s3oploggreen
-    #  irsaEnabled: true
-    #  pathStyleAccessEnabled: true
-    #  s3BucketEndpoint: "https://s3.eu-west-1.amazonaws.com"
-    #  s3BucketName: "marzulo-opsmanager"
-    #  mongodbResourceRef:
-    #    name: mongodb-be-mynt-203-instance-shared
-    #  mongodbUserRef:
-    #    name: backupusergreen
 
     s3Stores:
     - name: s3blockStore
       irsaEnabled: true
       pathStyleAccessEnabled: true
-      s3BucketEndpoint: "https://s3.eu-west-1.amazonaws.com"
-      s3BucketName: "marzulo-opsmanager"
+      s3BucketEndpoint: ${s3BucketEndpoint}
+      s3BucketName: ${s3BucketName}
       mongodbResourceRef:
         name: rsbackup
       mongodbUserRef:
         name: backupuser
-    #- name: s3blockStoreGreen
-    #  irsaEnabled: true
-    #  pathStyleAccessEnabled: true
-    #  s3BucketEndpoint: "https://s3.eu-west-1.amazonaws.com"
-    #  s3BucketName: "marzulo-opsmanager"
-    #  mongodbResourceRef:
-    #    name: mongodb-be-mynt-203-instance-shared
-    #  mongodbUserRef:
-    #    name: backupusergreen
 
   configuration:
     mms.ignoreInitialUiSetup: "true"
@@ -94,6 +76,21 @@ spec:
     mms.security.allowCORS: "false"
     mms.mongoDbUsage.defaultUsageType: DEV_SERVER
     mms.featureFlag.disableDiscoveryIpAddressAliases: "enabled"
+    mms.mongoDbUsage.defaultUsageType: DEV_SERVER
+    mms.featureFlag.disableDiscoveryIpAddressAliases: "enabled"
     mongodb.release.autoDownload.enterprise: "true"
     #automation.versions.source: mongodb
----
+
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongodb-ops-manager
+              resources:
+                requests:
+                  cpu: "0.5"
+                  memory: "2Gi"
+                limits:
+                  cpu: "1"
+                  memory: "4Gi"

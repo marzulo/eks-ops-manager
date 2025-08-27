@@ -66,25 +66,9 @@ module "efs" {
   tags = local.tags
 }
 
-resource "local_file" "efs_storage_class" {
-  content         = <<-EOF
-kind: StorageClass
-apiVersion: storage.k8s.io/v1
-metadata:
-  name: efs-sc
-  annotations:
-    storageclass.kubernetes.io/is-default-class: "true"
-provisioner: efs.csi.aws.com
-reclaimPolicy: Retain
-volumeBindingMode: WaitForFirstConsumer
-allowVolumeExpansion: true
-parameters:
-  provisioningMode: efs-ap
-  fileSystemId: ${module.efs.id}
-  directoryPerms: "777"
-  uid: "2000"
-  gid: "2000"
-  EOF
-  file_permission = "0644"
-  filename        = "${path.cwd}/../mongodb-kubernetes/mongodb-storageclass-efs.yaml"
+resource "local_file" "opsmanagersc_yaml" {
+  filename = "${path.cwd}/../mongodb-kubernetes/mongodb-storageclass-efs.yaml"
+  content = templatefile("${path.cwd}/../mongodb-kubernetes/mongodb-storageclass-efs.tmpl.yaml", {
+    fileSystemId     = module.efs.id
+  })
 }

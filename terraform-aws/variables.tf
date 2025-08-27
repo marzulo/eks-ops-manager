@@ -1,13 +1,13 @@
 variable "cluster_name" {
   description = "Name of the EKS cluster"
   type        = string
-  default     = "eks-marzulo"
+  default     = "eks-ops-manager"
 }
 
 variable "owner" {
   description = "Owner Name"
   type        = string
-  default     = "andre.marzulo"
+  ##default     = "name.surname"
 }
 
 variable "keep_until" {

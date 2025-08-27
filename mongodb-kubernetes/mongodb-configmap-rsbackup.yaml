@@ -6,7 +6,7 @@ metadata:
 data:
   baseUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
   projectName: rsbackup
-  orgId: 68ac886ce56a970c5ffbe114
+  orgId: 68adb3c69ce2de55addd57df
   sslMMSCAConfigMap: ca-issuer
   tlsRequireValidMMSServerCertificates: 'false'
   sslRequireValidMMSServerCertificates: 'false'
@@ -17,6 +17,6 @@ metadata:
   name: organization-secret
   namespace: mongodb
 stringData:
-  publicKey: mxjohyab
-  privateKey: 629a9b7b-81f5-49ed-870f-aaf60ca6b2c5
+  publicKey: xrmdhegh
+  privateKey: d9450e20-11ca-49f7-b41f-90b2ec571b38
 ---

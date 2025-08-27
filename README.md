@@ -1,2 +1,45 @@
 # eks-ops-manager
 Deploy Ops Manager and MongoDB using MCK 1.2.0 on AWS EKS with Terraform
+
+THIS IS A WORKING IN PROGRESS - Do not recommended to use without speak with owner
+
+Step 1: Pre requisites
+- MANA: 10gen-aws-tsteam-member-iam-plus
+- AWS CLI installed with SSO login configured (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html#cli-configure-sso-configure) : you must have the configuration to login to aws using `aws sso login --profile <your profile configured>`
+- kubectl: https://kubernetes.io/docs/tasks/tools/
+- eksctl: https://eksctl.io/installation/
+- terraform configured to support your aws cli configuration: https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-create
+
+Step 2. Prepare execution
+Go to terraform-aws dir and configure the terraform.tfvars with the following information of your deployment:
+```
+### TS mandatory tags
+owner      = "name.surname"
+keep_until = "YYYY-MM-DD"
+profawscli = "your_aws_cli_profile_name"
+
+### Your cluster configuration (Recommended use only letters on cluster name)
+cluster_name        = "clustername"
+region              = "eu-west-1"
+vpc_cidr            = "10.??.0.0/16"
+remote_network_cidr = "10.??.0.0/16"
+remote_pod_cidr     = "10.??.0.0/16"
+
+### Define your version, release and 
+cluster_version     = "1.31"
+ami_release_version = "1.31.7-20250620"
+ami_ami_type        = "AL2023_x86_64_STANDARD"
+```
+
+Step 3. Create the infra
+After terraform.vars configured type:
+- terraform init
+- terraform plan
+If no error so far:
+- terraform plan
+
+Step 4. Create the MongoDB Operator environment
+Go to mongodb-kubernetes, and execute the script: script_deploy_om.sh (at this point do it manually)
+
+Step 5. Deploy a sharded cluster with backup enabled
+By typing: kubectl apply -f mongodb-sharded-creation.yaml

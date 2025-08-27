@@ -9,8 +9,8 @@ spec:
   version: 8.0.6
   adminCredentials: adminusercredentials
 
-  #externalConnectivity:
-  #  type: LoadBalancer
+  externalConnectivity:
+    type: LoadBalancer
 
   security:
     certsSecretPrefix: "om"
@@ -51,4 +51,17 @@ spec:
     mms.featureFlag.disableDiscoveryIpAddressAliases: "enabled"
     mongodb.release.autoDownload.enterprise: "true"
     #automation.versions.source: mongodb
----
+
+  statefulSet:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: mongodb-ops-manager
+              resources:
+                requests:
+                  cpu: "0.5"
+                  memory: "2Gi"
+                limits:
+                  cpu: "1"
+                  memory: "4Gi"

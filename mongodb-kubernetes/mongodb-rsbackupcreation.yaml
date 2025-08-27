@@ -29,6 +29,13 @@ spec:
     tls:
       ca: "custom-ca"
 
+  #externalAccess:
+  #  externalService:
+  #    spec:
+  #      type: LoadBalancer
+  #      publishNotReadyAddress: true
+  #      port: 27017
+
   podSpec:
     podTemplate:
       metadata:
@@ -52,19 +59,7 @@ spec:
   statefulSet:
     spec:
       serviceName: rsbackup-svc
-  #    podTemplate:
-  #      spec:
-  #        containers:
-  #        - name: mongodb-enterprise-database
-  #          readinessProbe:
-  #            exec:
-  #              command:
-  #              - /bin/true
-  #            failureThreshold: 40
-  #            initialDelaySeconds: 5
-  #            periodSeconds: 10
-  #            successThreshold: 1
-  #            timeoutSeconds: 100
+
   additionalMongodConfig:
     net:
       tls:

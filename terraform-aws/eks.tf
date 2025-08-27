@@ -145,7 +145,7 @@ module "eks" {
 
   eks_managed_node_groups = {
     default = {
-      instance_types = ["r7i.xlarge","r7i.2xlarge"]
+      instance_types = ["r7i.xlarge", "r7i.2xlarge"]
       #force_update_version     = true
       release_version          = var.ami_release_version
       ami_type                 = var.ami_ami_type
@@ -167,7 +167,7 @@ module "eks" {
       desired_size = 3
 
       update_config = {
-        max_unavailable_percentage = 50
+        max_unavailable_percentage = 100
       }
 
       labels = {
