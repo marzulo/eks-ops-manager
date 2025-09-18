@@ -1,19 +1,22 @@
 # eks-ops-manager
 Deploy Ops Manager and MongoDB using MCK 1.4.0 on AWS EKS with Terraform
 
-THIS IS A WORKING IN PROGRESS - Do not recommended to use without speak with owner
+=__THIS IS A WORKING IN PROGRESS - Do not recommended to use without speak with owner__=
 
-Steps to install:
+## Steps to install:
 
-Step 1: Pre requisites
+### Step 1: Pre requisites
+
 - MANA: 10gen-aws-tsteam-member-iam-plus
-- AWS CLI installed with SSO login configured (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html#cli-configure-sso-configure) : you must have the configuration to login to aws using `aws sso login --profile <your profile configured>`
+- AWS CLI installed with SSO login configured (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sso.html#cli-configure-sso-configure):
+    you must have the configuration to login to aws using `aws sso login --profile <your profile configured>`
 - kubectl: https://kubernetes.io/docs/tasks/tools/
 - eksctl: https://eksctl.io/installation/
 - terraform configured to support your aws cli configuration: https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-create
 
-Step 2. Prepare execution
+### Step 2. Prepare execution
 Go to terraform-aws dir and configure the terraform.tfvars with the following information of your deployment:
+
 ```
 ### TS mandatory tags
 owner      = "name.surname"
@@ -33,29 +36,40 @@ ami_release_version = "1.33.4-20250904"
 ami_ami_type        = "AL2023_x86_64_STANDARD"
 ```
 
-Step 3. Create the infra
+### Step 3. Create the infra
 After terraform.vars configured type:
-- terraform init
-- terraform plan
+- ```terraform init```
+- ```terraform plan```
+
 If no error so far:
-- terraform apply
+- ```terraform apply```
 
-Step 4. Create the MongoDB Operator environment
-Go to mongodb-kubernetes, and execute the script: ./script_deploy_om.sh <AWS_REGION> <EKS_CLUSTER_NAME> <PROFILE>(at this point do it manually)
-(TODO) Improve rsbackup deployment rollout
+### Step 4. Create the MongoDB Operator environment
+Go to mongodb-kubernetes, and execute the script: 
 
-Step 5. Deploy a sharded cluster with backup enabled after finish the deployment
-By typing: kubectl apply -f mongodb-sharded-creation.yaml
+```./script_deploy_om.sh <AWS_REGION> <EKS_CLUSTER_NAME> <PROFILE>``` 
 
-(TODO) Step 6. Spin up Vector Search pod.
+> (I suggest to run the commands manually to understand each step and follow the rollout)
 
-Steps to destroy:
+_(**TODO**) Improve rsbackup deployment rollout_
 
-Step 1. Cleanup MongoDB elements
-Go to mongodb-kubernetes, and execute the script: ./script_destroy_om.sh
-## If the command get stucked whille cleaning up pvc you can shoot the command below in another window:
-## kubectl patch pvc  head-ops-manager-backup-daemon-0 -p '{"metadata":{"finalizers":null}}' --type=merge
+### Step 5. Deploy a sharded cluster with backup enabled after finish the deployment
 
-Step 2. Cleanup AWS Infrastructure
+```kubectl apply -f mongodb-sharded-creation.yaml```
+
+_(**TODO**) Step 6. Spin up Vector Search pod._
+
+
+## Steps to destroy:
+
+### Step 1. Cleanup MongoDB elements
+Go to mongodb-kubernetes, and execute the script:
+```./script_destroy_om.sh```
+
+> If the command get stucked whille cleaning up the `pvc` you can shoot the command below in another window:
+
+```kubectl patch pvc  head-ops-manager-backup-daemon-0 -p '{"metadata":{"finalizers":null}}' --type=merge```
+
+### Step 2. Cleanup AWS Infrastructure
 Go to terraform-aws dir and type:
-- terraform destroy --auto-approve
+- ```terraform destroy --auto-approve```
