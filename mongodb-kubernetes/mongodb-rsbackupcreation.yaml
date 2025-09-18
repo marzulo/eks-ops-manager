@@ -45,7 +45,7 @@ spec:
         containers:
         - name: mongodb-enterprise-database
           ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
-          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.2.0' ##MCK
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.4.0' ##MCK
           resources:
             limits:
               memory: 1Gi
@@ -55,6 +55,7 @@ spec:
     persistence:
       single:
         storage: 15Gi
+        storageClass: efs-sc
 
   statefulSet:
     spec:

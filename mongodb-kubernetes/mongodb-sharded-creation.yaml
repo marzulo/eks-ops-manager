@@ -66,10 +66,10 @@ spec:
         - name: mongodb-enterprise-database
           resources:
             limits:
-              cpu: 2
-              memory: 2G
+              cpu: 1
+              memory: 3G
             requests:
-              cpu: 2
+              cpu: 0.5
               memory: 2G
   opsManager:
     configMapRef:
@@ -79,16 +79,17 @@ spec:
     persistence:
       single:
         storage: 10Gi
+        storageClass: efs-sc
     podTemplate:
       spec:
         containers:
         - name: mongodb-enterprise-database
           resources:
             limits:
-              cpu: 2
+              cpu: 1
               memory: 1.5G
             requests:
-              cpu: 1
+              cpu: 0.5
               memory: 1G
         terminationGracePeriodSeconds: 10
         topologySpreadConstraints:
@@ -135,9 +136,9 @@ spec:
           resources:
             limits:
               cpu: "2"
-              memory: 2G
+              memory: 3G
             requests:
-              cpu: "2"
+              cpu: "1"
               memory: 2G
   type: ShardedCluster
   version: 7.0.22-ent

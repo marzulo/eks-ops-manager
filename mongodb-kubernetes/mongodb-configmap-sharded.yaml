@@ -6,7 +6,7 @@ metadata:
 data:
   baseUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
   projectName: mongodb-sharded
-  orgId: 68adb3c69ce2de55addd57df
+  orgId: 68cc1a5b0ff0121a69002cd0
   sslMMSCAConfigMap: ca-issuer
   tlsRequireValidMMSServerCertificates: 'false'
   sslRequireValidMMSServerCertificates: 'false'

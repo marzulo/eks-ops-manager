@@ -1,7 +1,9 @@
 # eks-ops-manager
-Deploy Ops Manager and MongoDB using MCK 1.2.0 on AWS EKS with Terraform
+Deploy Ops Manager and MongoDB using MCK 1.4.0 on AWS EKS with Terraform
 
 THIS IS A WORKING IN PROGRESS - Do not recommended to use without speak with owner
+
+Steps to install:
 
 Step 1: Pre requisites
 - MANA: 10gen-aws-tsteam-member-iam-plus
@@ -26,8 +28,8 @@ remote_network_cidr = "10.??.0.0/16"
 remote_pod_cidr     = "10.??.0.0/16"
 
 ### Define your version, release and 
-cluster_version     = "1.31"
-ami_release_version = "1.31.7-20250620"
+cluster_version     = "1.33"
+ami_release_version = "1.33.4-20250904"
 ami_ami_type        = "AL2023_x86_64_STANDARD"
 ```
 
@@ -36,10 +38,24 @@ After terraform.vars configured type:
 - terraform init
 - terraform plan
 If no error so far:
-- terraform plan
+- terraform apply
 
 Step 4. Create the MongoDB Operator environment
-Go to mongodb-kubernetes, and execute the script: script_deploy_om.sh (at this point do it manually)
+Go to mongodb-kubernetes, and execute the script: ./script_deploy_om.sh <AWS_REGION> <EKS_CLUSTER_NAME> <PROFILE>(at this point do it manually)
+(TODO) Improve rsbackup deployment rollout
 
-Step 5. Deploy a sharded cluster with backup enabled
+Step 5. Deploy a sharded cluster with backup enabled after finish the deployment
 By typing: kubectl apply -f mongodb-sharded-creation.yaml
+
+(TODO) Step 6. Spin up Vector Search pod.
+
+Steps to destroy:
+
+Step 1. Cleanup MongoDB elements
+Go to mongodb-kubernetes, and execute the script: ./script_destroy_om.sh
+## If the command get stucked whille cleaning up pvc you can shoot the command below in another window:
+## kubectl patch pvc  head-ops-manager-backup-daemon-0 -p '{"metadata":{"finalizers":null}}' --type=merge
+
+Step 2. Cleanup AWS Infrastructure
+Go to terraform-aws dir and type:
+- terraform destroy --auto-approve

@@ -76,8 +76,6 @@ spec:
     mms.security.allowCORS: "false"
     mms.mongoDbUsage.defaultUsageType: DEV_SERVER
     mms.featureFlag.disableDiscoveryIpAddressAliases: "enabled"
-    mms.mongoDbUsage.defaultUsageType: DEV_SERVER
-    mms.featureFlag.disableDiscoveryIpAddressAliases: "enabled"
     mongodb.release.autoDownload.enterprise: "true"
     #automation.versions.source: mongodb
 
