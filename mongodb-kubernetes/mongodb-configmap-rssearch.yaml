@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rssearch
+  namespace: mongodb
+data:
+  baseUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
+  projectName: rssearch
+  orgId: 999999999999999999999999
+  sslMMSCAConfigMap: ca-issuer
+  tlsRequireValidMMSServerCertificates: 'false'
+  sslRequireValidMMSServerCertificates: 'false'

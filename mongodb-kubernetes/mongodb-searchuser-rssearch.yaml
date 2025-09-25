@@ -1,0 +1,59 @@
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: rssearch-admin
+spec:
+  username: rssearch-admin
+  db: admin
+  mongodbResourceRef:
+    name: rssearch
+  passwordSecretKeyRef:
+    name: opsmanagereks-db-om-password # mongod123XMONGOD123x
+    key: password
+  roles:
+  - name: root
+    db: admin
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: search-sync-source-user
+spec:
+  username: search-sync-source
+  db: admin
+  mongodbResourceRef:
+    name: rssearch
+  passwordSecretKeyRef:
+    name: opsmanagereks-db-om-password # mongod123XMONGOD123x
+    key: password
+  roles:
+  - name: searchCoordinator
+    db: admin
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: rssearch-user
+spec:
+  username: rssearch-user
+  db: "admin"
+  passwordSecretKeyRef:
+      key: password
+      name: opsmanagereks-db-om-password # mongod123XMONGOD123x
+  mongodbResourceRef:
+    name: rssearch
+  roles:
+  - db: "admin"
+    name: "root"
+  - db: "admin"
+    name: "readWriteAnyDatabase"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rssearch-search-sync-source-password
+  namespace: mongodb
+type: Opaque
+stringData:
+  password: "mongod123XMONGOD123x"
+---

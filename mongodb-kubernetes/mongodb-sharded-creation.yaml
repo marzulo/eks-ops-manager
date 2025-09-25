@@ -18,7 +18,7 @@ spec:
       monthlySnapshotRetentionMonths: 0
       pointInTimeWindowHours: 1
       snapshotIntervalHours: 24
-      snapshotRetentionDays: 1
+      snapshotRetentionDays: 2
       weeklySnapshotRetentionWeeks: 0
 
   configServerCount: 1
@@ -29,14 +29,13 @@ spec:
   configSrvPodSpec:
     persistence:
       single:
-        storage: 8Gi
+        storage: 4Gi
         storageClass: efs-sc
     podTemplate:
       metadata:
         labels:
           env: sharded
-          group: shared
-          type: infra
+          group: arm
       spec:
         containers:
         - name: mongodb-enterprise-database
@@ -59,8 +58,7 @@ spec:
       metadata:
         labels:
           env: sharded
-          group: shared
-          type: infra
+          group: arm
       spec:
         containers:
         - name: mongodb-enterprise-database
@@ -78,7 +76,7 @@ spec:
   podSpec:
     persistence:
       single:
-        storage: 10Gi
+        storage: 5Gi
         storageClass: efs-sc
     podTemplate:
       spec:
@@ -116,20 +114,19 @@ spec:
     persistence:
       multiple:
         data:
-          storage: 16Gi
+          storage: 8Gi
           storageClass: efs-sc
         journal:
-          storage: 8Gi
+          storage: 4Gi
           storageClass: efs-sc
         logs:
-          storage: 8Gi
+          storage: 4Gi
           storageClass: efs-sc
     podTemplate:
       metadata:
         labels:
           env: sharded
-          group: shared
-          type: infra
+          group: arm
       spec:
         containers:
         - name: mongodb-enterprise-database
@@ -141,7 +138,7 @@ spec:
               cpu: "1"
               memory: 2G
   type: ShardedCluster
-  version: 7.0.22-ent
+  version: 8.2.0-ent
 
   externalAccess:
     externalService:

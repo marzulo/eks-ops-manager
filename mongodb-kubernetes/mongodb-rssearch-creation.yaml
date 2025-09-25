@@ -1,0 +1,83 @@
+apiVersion: mongodb.com/v1
+kind: MongoDB
+metadata:
+  name: rssearch
+  namespace: mongodb
+spec:
+  members: 3
+  version: "8.2.0-ent"
+  credentials: organization-secret
+  type: ReplicaSet
+  featureCompatibilityVersion: "8.2"
+  persistent: true
+
+  opsManager:
+    configMapRef:
+      name: rssearch  # Must match metadata.name in ConfigMap file
+
+  security:
+    certsSecretPrefix: "search"
+    authentication:
+      enabled: true
+      ignoreUnknownUsers: true   ## Disable authoritativeSet to False (Enforce Consistent Set)
+      requireClientTLSAuthentication: false
+      modes:
+      - "SCRAM"
+    tls:
+      ca: "custom-ca"
+
+  externalAccess:
+    externalService:
+      spec:
+        type: LoadBalancer
+        publishNotReadyAddress: true
+        port: 27017
+
+  podSpec:
+    podTemplate:
+      metadata:
+        labels:
+          name: rssearch
+          group: "ARM"
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.4.0' ##MCK
+          resources:
+            limits:
+              memory: 1Gi
+            requests:
+              memory: 750Mi
+
+    persistence:
+      single:
+        storage: 10Gi
+        storageClass: efs-sc
+
+  statefulSet:
+    spec:
+      serviceName: rssearch-svc
+
+  additionalMongodConfig:
+    net:
+      tls:
+        mode: requireTLS
+        allowConnectionsWithoutCertificates: true
+
+  backup:
+    mode: enabled
+    snapshotSchedule:
+      dailySnapshotRetentionDays: 2
+      fullIncrementalDayOfWeek: "SUNDAY" 
+      monthlySnapshotRetentionMonths: 0
+      pointInTimeWindowHours: 1
+      snapshotIntervalHours: 24
+      snapshotRetentionDays: 2
+      weeklySnapshotRetentionWeeks: 0
+
+  connectivity:
+    replicaSetHorizons:
+    - "rssearch-svc-external": "randomcharstring.region-1.elb.amazonaws.com:27017"
+    - "rssearch-svc-external": "randomcharstring.region-1.elb.amazonaws.com:27017"
+    - "rssearch-svc-external": "randomcharstring.region-1.elb.amazonaws.com:27017"

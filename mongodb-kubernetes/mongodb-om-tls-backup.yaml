@@ -12,10 +12,10 @@ spec:
   externalConnectivity:
     type: LoadBalancer
 
-  #security:
-  #  certsSecretPrefix: "om"
-  #  tls:
-  #    ca: "ca-issuer"
+  security:
+    certsSecretPrefix: "om"
+    tls:
+      ca: "ca-issuer"
 
   applicationDatabase:
     featureCompatibilityVersion: "8.2"
@@ -25,17 +25,44 @@ spec:
       name: opsmanagereks-db-om-password
     topology: SingleCluster
     version: 8.2.0-ent
-    #security:
-    #  certsSecretPrefix: "appdb"
-    #  tls:
-    #    ca: "ca-issuer"
+    security:
+      certsSecretPrefix: "appdb"
+      tls:
+        ca: "ca-issuer"
 
-  backup:
-    enabled: false
+  backup :
+    enabled: true
+    externalServiceEnabled: false
+    members: 1
+
+    headDB:
+      storage: "5Gi"
+
+    s3OpLogStores:
+    - name: s3oplog
+      irsaEnabled: true
+      pathStyleAccessEnabled: true
+      s3BucketEndpoint: https://s3.eu-west-1.amazonaws.com
+      s3BucketName: mzleksom-logs-8730f7e6
+      mongodbResourceRef:
+        name: rsbackup
+      mongodbUserRef:
+        name: backupuser
+
+    s3Stores:
+    - name: s3blockStore
+      irsaEnabled: true
+      pathStyleAccessEnabled: true
+      s3BucketEndpoint: https://s3.eu-west-1.amazonaws.com
+      s3BucketName: mzleksom-logs-8730f7e6
+      mongodbResourceRef:
+        name: rsbackup
+      mongodbUserRef:
+        name: backupuser
 
   configuration:
     mms.ignoreInitialUiSetup: "true"
-    mms.centralUrl: http://ops-manager-svc.mongodb.svc.cluster.local:8080
+    mms.centralUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
     mms.adminEmailAddr: a@b.com
     mms.fromEmailAddr: a@b.com
     mms.mail.hostname: mailpit-svc-ext.mailpit.svc.cluster.local
@@ -56,24 +83,12 @@ spec:
     spec:
       template:
         spec:
-#          affinity:
-#            nodeAffinity:
-#              requiredDuringSchedulingIgnoredDuringExecution:
-#                nodeSelectorTerms:
-#                  - matchExpressions:
-#                    - key: group
-#                      operator: In
-#                      values:
-#                        - ARM
           containers:
-          - name: mongodb-ops-manager
-            resources:
-              limits:
-                cpu: "1"
-                memory: 4Gi
-              requests:
-                cpu: "0.5"
-                memory: 1Gi
-          metadata:
-            annotations:
-              key1: value1
+            - name: mongodb-ops-manager
+              resources:
+                requests:
+                  cpu: "0.5"
+                  memory: "2Gi"
+                limits:
+                  cpu: "1"
+                  memory: "4Gi"

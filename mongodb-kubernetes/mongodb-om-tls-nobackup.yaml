@@ -6,7 +6,7 @@ metadata:
 spec:
   topology: SingleCluster
   replicas: 1
-  version: 8.0.6
+  version: 8.0.14
   adminCredentials: adminusercredentials
 
   externalConnectivity:
@@ -18,13 +18,13 @@ spec:
       ca: "ca-issuer"
 
   applicationDatabase:
-    featureCompatibilityVersion: "8.0"
+    featureCompatibilityVersion: "8.2"
     members: 3
     passwordSecretKeyRef:
       key: password
       name: opsmanagereks-db-om-password
     topology: SingleCluster
-    version: 8.0.6-ent
+    version: 8.2.0-ent
     security:
       certsSecretPrefix: "appdb"
       tls:

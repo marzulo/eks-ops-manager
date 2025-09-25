@@ -1,14 +1,17 @@
 #!/bin/bash
-kubectl delete mdb mongodb-sharded
-kubectl delete mdb rsbackup
 kubectl delete om ops-manager
+kubectl delete mdbs rssearch
+kubectl delete mdb rsbackup mongodb-sharded rssearch
+kubectl delete mdbu --all
 kubectl delete pod mailpit -n mailpit
 kubectl delete svc mailpit-svc-ext -n mailpit
-kubectl delete secrets --all
-kubectl delete configmap ca-issuer custom-ca mongodb-sharded-configmap mongodb-sharded-state ops-manager-db-automation-config-version ops-manager-db-cluster-mapping ops-manager-db-member-spec ops-manager-db-monitoring-automation-config-version ops-manager-db-project-id ops-manager-db-state rsbackup
-kubectl delete svc --all
+kubectl get secrets -o name | grep -v "adminusercredentials" | grep -v "opsmanagereks-db-om-password" | xargs kubectl delete
+kubectl get configmap -o name | grep -v "kube-root-ca.crt" | grep -v "mongodb-enterprise-operator-telemetry" | xargs kubectl delete
+kubectl get svc -o name | grep -v "operator-webhook" | xargs kubectl delete
+kubectl get pvc -o name | grep -v "head-ops-manager-backup-daemon-0" | xargs kubectl delete
+kubectl delete pvc head-ops-manager-backup-daemon-0 --grace-period=0 --force &
+sleep 10
 kubectl patch pvc head-ops-manager-backup-daemon-0 -p '{"metadata":{"finalizers":null}}' --type=merge
-kubectl delete pvc --all --grace-period=0 --force
 kubectl delete pv --all --grace-period=0 --force
 kubectl delete pod ops-manager-backup-daemon-0 --grace-period=0 --force
 

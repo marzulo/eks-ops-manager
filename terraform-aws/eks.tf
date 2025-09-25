@@ -153,7 +153,7 @@ module "eks" {
       create_iam_role          = false
       iam_role_arn             = aws_iam_role.role_node_eks.arn
       iam_role_use_name_prefix = false
-      disk_size                = 60
+      disk_size                = 120
       ebs_optimized            = true
       iam_role_additional_policies = {
         ssm_access        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
@@ -173,8 +173,42 @@ module "eks" {
       labels = {
         "karpenter.sh/controller"     = "false"
         "${var.cluster_name}-default" = "yes"
+        "group"                       = "X86"
       }
     }
+
+    /*arm = {
+      instance_types = ["r8g.xlarge", "r8g.2xlarge"]
+      #force_update_version     = true
+      release_version          = var.ami_release_version
+      ami_type                 = var.ami_ami_type
+      use_name_prefix          = false
+      create_iam_role          = false
+      iam_role_arn             = aws_iam_role.role_node_eks.arn
+      iam_role_use_name_prefix = false
+      disk_size                = 120
+      ebs_optimized            = true
+      iam_role_additional_policies = {
+        ssm_access        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        cloudwatch_access = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+        service_role_ssm  = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+        default_policy    = "arn:aws:iam::aws:policy/AmazonSSMManagedEC2InstanceDefaultPolicy"
+      }
+
+      min_size     = 1
+      max_size     = 5
+      desired_size = 3
+
+      update_config = {
+        max_unavailable_percentage = 100
+      }
+
+      labels = {
+        "karpenter.sh/controller"     = "false"
+        "${var.cluster_name}-default" = "no"
+        "group"                       = "ARM"
+      }
+    }*/
   }
 
   #node_security_group_tags = merge(local.tags, {

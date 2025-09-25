@@ -29,6 +29,7 @@ cat test-CA.pem cert2.crt cert3.crt  > mms-ca.crt
 
 ## To delete cleanup: rm *.crt *.csr *.key *.srl *.pem
 
+## generating rsbackup certificates
 openssl req -new -key RS-test-server.key -out RS-rsbackup.csr -config openssl-rsbackup.cnf -batch
 openssl req -new -key RS-test-server.key -out RS-rsbkpagent.csr -config openssl-rsbkpagent.cnf -batch
 openssl x509 -sha256 -req -days 365 -in RS-rsbackup.csr -CA CA-test-ia.crt -CAkey CA-test-ia.key -CAcreateserial -out RS-rsbackup.crt -extfile openssl-rsbackup.cnf -extensions v3_req
@@ -36,3 +37,12 @@ openssl x509 -sha256 -req -days 365 -in RS-rsbkpagent.csr -CA CA-test-ia.crt -CA
 
 cat RS-rsbackup.crt RS-test-server.key > test-rsbackup.pem
 cat RS-rsbkpagent.crt RS-test-server.key > test-rsbkpagent.pem
+
+## generating rssearch certificates
+openssl req -new -key RS-test-server.key -out RS-rssearch.csr -config openssl-rssearch.cnf -batch
+openssl req -new -key RS-test-server.key -out RS-rssearch-agent.csr -config openssl-rssearch-agent.cnf -batch
+openssl x509 -sha256 -req -days 365 -in RS-rssearch.csr -CA CA-test-ia.crt -CAkey CA-test-ia.key -CAcreateserial -out RS-rssearch.crt -extfile openssl-rssearch.cnf -extensions v3_req
+openssl x509 -sha256 -req -days 365 -in RS-rssearch-agent.csr -CA CA-test-ia.crt -CAkey CA-test-ia.key -CAcreateserial -out RS-rssearch-agent.crt -extfile openssl-rssearch-agent.cnf -extensions v3_req
+
+cat RS-rssearch.crt RS-test-server.key > test-rssearch.pem
+cat RS-rssearch-agent.crt RS-test-server.key > test-rssearch-agent.pem

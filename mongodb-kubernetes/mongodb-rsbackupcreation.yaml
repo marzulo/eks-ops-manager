@@ -5,10 +5,10 @@ metadata:
   namespace: mongodb
 spec:
   members: 3
-  version: "8.0.6-ent"
+  version: "8.2.0-ent"
   credentials: organization-secret
   type: ReplicaSet
-  featureCompatibilityVersion: "8.0"
+  featureCompatibilityVersion: "8.2"
   persistent: true
 
   opsManager:

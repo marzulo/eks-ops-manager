@@ -26,4 +26,3 @@ spec:
     name: "root"
   - db: "admin"
     name: "readWriteAnyDatabase"
----

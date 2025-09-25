@@ -1,0 +1,33 @@
+apiVersion: mongodb.com/v1
+kind: MongoDBSearch
+metadata:
+  name: rssearch
+  namespace: mongodb
+spec:
+  source:
+#    mongodbResourceRef:
+#      name: rssearch
+#    passwordSecretRef:
+#      name: searchuser
+#      key: password
+#    username: searchuser
+  
+  logLevel: "DEBUG"
+  
+  persistence:
+    single:
+      storage: 8Gi
+      storageClass: efs-sc
+  
+  resourceRequirements:
+    limits:
+      cpu: "1"
+      memory: 1.5G
+      ephemeral-storage: 1G
+    requests:
+      cpu: "0.5"
+      memory: 1G
+
+#  security:
+#    tls:
+#      certificateKeySecretRef: "ca-issuer"
