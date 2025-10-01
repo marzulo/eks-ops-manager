@@ -192,7 +192,7 @@ else
   fi
 fi
 kubectl get pods
-echo "Finish.
+echo "Finish."
 echo "Type 'kubectl apply -f mongodb-sharded-creation.yaml' to deploy the sharded cluster"
 echo "Type './script_deploy_search.sh $param1 $param2 $param3' to deploy Replica Set with Search"
 
