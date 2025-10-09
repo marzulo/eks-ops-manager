@@ -67,6 +67,7 @@ spec:
 
   backup:
     mode: enabled
+    assignmentLabels: ["new"]
     snapshotSchedule:
       dailySnapshotRetentionDays: 2
       fullIncrementalDayOfWeek: "SUNDAY" 

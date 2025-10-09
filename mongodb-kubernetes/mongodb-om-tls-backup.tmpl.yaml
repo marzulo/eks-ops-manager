@@ -41,6 +41,7 @@ spec:
     s3OpLogStores:
     - name: s3oplog
       irsaEnabled: true
+      assignmentLabels: ["new"]
       pathStyleAccessEnabled: true
       s3BucketEndpoint: ${s3BucketEndpoint}
       s3BucketName: ${s3BucketName}
@@ -52,6 +53,7 @@ spec:
     s3Stores:
     - name: s3blockStore
       irsaEnabled: true
+      assignmentLabels: ["new"]
       pathStyleAccessEnabled: true
       s3BucketEndpoint: ${s3BucketEndpoint}
       s3BucketName: ${s3BucketName}

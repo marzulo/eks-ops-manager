@@ -45,8 +45,9 @@ module "eks" {
       })
     }
     aws-ebs-csi-driver = {
-      service_account_role_arn = aws_iam_role.pods_eks.arn
-      resolve_conflicts        = "PRESERVE"
+      service_account_role_arn    = aws_iam_role.ebs_cni_role.arn
+      resolve_conflicts           = "PRESERVE"
+      resolve_conflicts_on_create = "OVERWRITE"
 
       tags = merge(local.tags, {
         "eks_addon" = "aws-ebs-csi-driver"
@@ -249,6 +250,37 @@ EOF
 resource "aws_iam_role_policy_attachment" "vpc_cni_policy" {
   role       = aws_iam_role.vpc_cni_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+}
+
+#Role for ebs cni controler
+resource "aws_iam_role" "ebs_cni_role" {
+  name               = "role-${var.cluster_name}-ebs-cni"
+  tags               = local.tags
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "${module.eks.oidc_provider_arn}"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${module.eks.oidc_provider}:sub": "system:serviceaccount:kube-system:ebs-csi-controller-sa",
+          "${module.eks.oidc_provider}:aud": "sts.amazonaws.com"
+        }
+      }
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_cni_policy" {
+  role       = aws_iam_role.ebs_cni_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
 }
 
 #Role for efs cni controler
