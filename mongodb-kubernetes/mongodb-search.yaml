@@ -1,3 +1,12 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: voyage-api-keys
+  namespace: mongodb
+stringData:
+  indexing-key: "voyage_search_ea_mzl"
+  query-key: "al-n9mELyEx3h6BN9d2XdCSd6eouN-UHtGHKahw8_sFZOp"
+---
 apiVersion: mongodb.com/v1
 kind: MongoDBSearch
 metadata:
@@ -5,29 +14,54 @@ metadata:
   namespace: mongodb
 spec:
   source:
-#    mongodbResourceRef:
-#      name: rssearch
-#    passwordSecretRef:
-#      name: searchuser
-#      key: password
-#    username: searchuser
-  
-  logLevel: "DEBUG"
-  
-  persistence:
-    single:
-      storage: 8Gi
-      storageClass: efs-sc
-  
-  resourceRequirements:
-    limits:
-      cpu: "1"
-      memory: 1.5G
-      ephemeral-storage: 1G
-    requests:
-      cpu: "0.5"
-      memory: 1G
+    mongodbResourceRef:
+      name: rssearch
 
-#  security:
-#    tls:
-#      certificateKeySecretRef: "ca-issuer"
+  clusters:
+    - name: rssearch
+      replicas: 1
+
+      resourceRequirements:
+        limits:
+          cpu: "1"
+          memory: 4G
+          ephemeral-storage: 1G
+        requests:
+          cpu: "1"
+          memory: 4G
+
+      persistence:
+        single:
+          storage: 8Gi
+          storageClass: efs-sc
+
+      statefulSet:
+        spec:
+          template:
+            spec:
+              affinity:
+                nodeAffinity:
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                      - matchExpressions:
+                          - key: "group"
+                            operator: In
+                            values:
+                              - "X86"
+
+  logLevel: "INFO"
+
+  #version: "1.70.1"
+
+  security:
+    tls:
+      certsSecretPrefix: "mongot"
+
+  autoEmbedding:
+    providerEndpoint: https://ai.mongodb.com/v1/embeddings
+    embeddingModelAPIKeySecret:
+      name: voyage-api-keys
+
+  observability:
+    prometheus:
+      port: 9946

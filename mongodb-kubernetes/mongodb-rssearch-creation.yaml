@@ -5,10 +5,10 @@ metadata:
   namespace: mongodb
 spec:
   members: 3
-  version: "8.2.0-ent"
+  version: "8.3.4-ent"
   credentials: organization-secret
   type: ReplicaSet
-  featureCompatibilityVersion: "8.2"
+  featureCompatibilityVersion: "8.0"
   persistent: true
 
   opsManager:
@@ -43,13 +43,29 @@ spec:
         containers:
         - name: mongodb-enterprise-database
           ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
-          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.4.0' ##MCK
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.9.1' ##MCK
           resources:
             limits:
-              memory: 1Gi
+              memory: 4Gi
+              cpu: "1"
             requests:
-              memory: 750Mi
-
+              memory: 4Gi
+              cpu: "1"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: "group"
+                  operator: In
+                  values:
+                  - "ARM"
+        tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "arm"
+          effect: "NoSchedule"
+  
     persistence:
       single:
         storage: 10Gi
@@ -77,8 +93,3 @@ spec:
       snapshotRetentionDays: 2
       weeklySnapshotRetentionWeeks: 0
 
-  connectivity:
-    replicaSetHorizons:
-    - "rssearch-svc-external": "randomcharstring.region-1.elb.amazonaws.com:27017"
-    - "rssearch-svc-external": "randomcharstring.region-1.elb.amazonaws.com:27017"
-    - "rssearch-svc-external": "randomcharstring.region-1.elb.amazonaws.com:27017"

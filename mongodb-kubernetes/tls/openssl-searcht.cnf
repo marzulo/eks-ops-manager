@@ -18,10 +18,11 @@ subjectAltName = @alt_names
 
 [ alt_names ]
 DNS.1 = *.svc.cluster.local
-DNS.2 = *.rsbackup-svc.mongodb.svc.cluster.local
-DNS.3 = mdbsearch-0
-DNS.4 = mdbsearch-0.rsbackup-svc.mongodb.svc.cluster.local
+DNS.2 = *.rssearch-search-0-svc.mongodb.svc.cluster.local
+DNS.3 = rssearch-search-0-0
+DNS.4 = rssearch-search-0-0.rssearch-search-0-svc.mongodb.svc.cluster.local
 DNS.5 = *.eu-west-1.elb.amazonaws.com
+DNS.6 = *.eu-central-1.elb.amazonaws.com
 
 [ req_dn ]
 countryName = Country Name (2 letter code)
@@ -38,7 +39,7 @@ localityName_default = TestCertificateLocalityName
 localityName_max = 64
 
 organizationName = Organization Name (eg, company)
-organizationName_default = MongoDB
+organizationName_default = MongoDB_Search
 organizationName_max = 64
 
 organizationalUnitName = Organizational Unit Name (eg, section)
@@ -46,5 +47,5 @@ organizationalUnitName_default = Search
 organizationalUnitName_max = 64
 
 commonName = Common Name (eg, YOUR name)
-commonName_default = mdbsearch
+commonName_default = rssearch
 commonName_max = 64

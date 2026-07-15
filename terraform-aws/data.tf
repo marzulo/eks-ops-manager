@@ -1,23 +1,33 @@
 data "aws_caller_identity" "current" {}
 
-data "aws_iam_policy_document" "bucketpolicylogsdoc" {
+locals {
   ## Check the principal based in your region here 
   ## https://docs.aws.amazon.com/elasticloadbalancing/latest/application/enable-access-logging.html#attach-bucket-policy
   ## identifiers = ["arn:aws:iam::054676820928:root"] ## eu-central-1 Frankfurt
   ## identifiers = ["arn:aws:iam::156460612806:root"] ## eu-west-1 Ireland
   ## identifiers = ["arn:aws:iam::897822967062:root"] ## eu-north-1 Stockholm
   ## identifiers = ["arn:aws:iam::127311923021:root"] ## us-east-1 N. Virginia
+  elb_account_ids = {
+    "eu-central-1" = "054676820928"
+    "eu-west-1"    = "156460612806"
+    "eu-north-1"   = "897822967062"
+    "us-east-1"    = "127311923021"
+  }
+}
+
+data "aws_iam_policy_document" "bucketpolicylogsdoc" {
+
   statement {
     sid = "GetObjectELBeucentral1"
     principals {
       type        = "AWS"
-      identifiers = ["arn:aws:iam::156460612806:root"]
+      identifiers = ["arn:aws:iam::${local.elb_account_ids[var.region]}:root"]
     }
     actions = [
       "s3:GetObject", "s3:PutObject"
     ]
     resources = [
-      "${module.s3-ops-manager-logs.s3_bucket_arn}/*"
+      "${module.s3-ops-manager-logs["logs"].s3_bucket_arn}/*"
     ]
   }
   statement {
@@ -30,7 +40,7 @@ data "aws_iam_policy_document" "bucketpolicylogsdoc" {
       "s3:GetBucketAcl"
     ]
     resources = [
-      "${module.s3-ops-manager-logs.s3_bucket_arn}"
+      "${module.s3-ops-manager-logs["logs"].s3_bucket_arn}"
     ]
     condition {
       test     = "StringEquals"
@@ -54,7 +64,7 @@ data "aws_iam_policy_document" "bucketpolicylogsdoc" {
       "s3:PutObject"
     ]
     resources = [
-      "${module.s3-ops-manager-logs.s3_bucket_arn}/*"
+      "${module.s3-ops-manager-logs["logs"].s3_bucket_arn}/*"
     ]
     condition {
       test     = "StringEquals"

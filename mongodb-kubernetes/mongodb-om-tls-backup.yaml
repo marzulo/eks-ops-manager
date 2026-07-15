@@ -1,0 +1,183 @@
+apiVersion: mongodb.com/v1
+kind: MongoDBOpsManager
+metadata:
+  name: ops-manager
+  namespace: mongodb
+spec:
+  topology: SingleCluster
+  replicas: 1
+  version: 8.0.25
+  adminCredentials: adminusercredentials
+
+  externalConnectivity:
+    type: LoadBalancer
+
+  security:
+    certsSecretPrefix: "om"
+    tls:
+      ca: "ca-issuer"
+
+  applicationDatabase:
+    featureCompatibilityVersion: "8.0"
+    members: 3
+    passwordSecretKeyRef:
+      key: password
+      name: opsmanagereks-db-om-password
+    topology: SingleCluster
+    version: 8.0.26-ent
+    security:
+      certsSecretPrefix: "appdb"
+      tls:
+        ca: "ca-issuer"
+
+    agent:
+      logLevel: INFO
+      startupOptions:
+        maxLogFiles: "10"
+        maxLogFileSize: "1000000"  ## 1GB
+        maxUncompressedLogFiles: "2"
+        maxLogFileDurationHrs: "24"
+
+      mongod:
+        logRotate:
+          sizeThresholdMB: "1000"  ## 1GB
+          timeThresholdHrs: 24
+          numTotal: 5
+          numUncompressed: 2
+          percentOfDiskspace: "0.02"
+
+      monitoringAgent:
+        logRotate:
+          sizeThresholdMB: 200
+          timeThresholdHrs: 24
+
+    podSpec:
+      podTemplate:
+        metadata:
+          labels:
+            name: ops-manager-db
+            group: "ARM"
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: "group"
+                    operator: In
+                    values:
+                    - "ARM"
+          tolerations:
+          - key: "workload"
+            operator: "Equal"
+            value: "arm"
+            effect: "NoSchedule"
+          containers:
+          - name: mongod
+            resources:
+              limits:
+                memory: 4Gi
+                cpu: "1"
+              requests:
+                memory: 4Gi
+                cpu: "1"
+
+  backup :
+    enabled: true
+    externalServiceEnabled: false
+    members: 1
+
+    assignmentLabels: ["new"]
+
+    headDB:
+      storage: "5Gi"
+
+    s3OpLogStores:
+    - name: s3oplog
+      irsaEnabled: true
+      assignmentLabels: ["new"]
+      pathStyleAccessEnabled: true
+      s3BucketEndpoint: https://s3.eu-central-1.amazonaws.com
+      s3BucketName: mzleksom-logs-ed624ede
+      mongodbResourceRef:
+        name: rsbackup
+      mongodbUserRef:
+        name: backupuser
+
+    s3Stores:
+    - name: s3blockStore
+      irsaEnabled: true
+      assignmentLabels: ["new"]
+      pathStyleAccessEnabled: true
+      s3BucketEndpoint: https://s3.eu-central-1.amazonaws.com
+      s3BucketName: mzleksom-logs-ed624ede
+      mongodbResourceRef:
+        name: rsbackup
+      mongodbUserRef:
+        name: backupuser
+    - name: s3ImmutblockStore
+      irsaEnabled: true
+      assignmentLabels: ["immutable"]
+      pathStyleAccessEnabled: true
+      s3BucketEndpoint: https://s3.eu-central-1.amazonaws.com
+      s3BucketName: mzleksom-logs-immutable-ed624ede
+      objectLockEnabled: true
+      mongodbResourceRef:
+        name: rsbackup
+      mongodbUserRef:
+        name: backupuser
+
+  configuration:
+    mms.ignoreInitialUiSetup: "true"
+    mms.centralUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
+    ##mms.agentCentralUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
+    ##mms.backupCentralUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
+    mms.adminEmailAddr: a@b.com
+    mms.fromEmailAddr: a@b.com
+    mms.mail.hostname: mailpit-svc-ext.mailpit.svc.cluster.local
+    #mms.mail.user: apikey
+    #mms.mail.password: randomcharstring
+    mms.mail.port: "1025"
+    mms.mail.ssl: "false"
+    mms.mail.transport: smtp
+    mms.minimumTLSVersion: TLSv1.2
+    mms.replyToEmailAddr: a@b.com
+    mms.security.allowCORS: "false"
+    mms.mongoDbUsage.defaultUsageType: DEV_SERVER
+    mms.featureFlag.disableDiscoveryIpAddressAliases: "enabled"
+    mongodb.release.autoDownload.enterprise: "true"
+    brs.immutableBackupEnabled: "true"
+    #automation.versions.source: mongodb
+
+  statefulSet:
+    spec:
+      template:
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                    - key: group
+                      operator: In
+                      values:
+                        - X86
+          containers:
+            - name: mongodb-ops-manager
+              resources:
+                requests:
+                  cpu: "2"
+                  memory: "8Gi"
+                limits:
+                  cpu: "2"
+                  memory: "8Gi"
+      volumeClaimTemplates:
+      - metadata:
+          name: data
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 60Gi
+          storageClassName: efs-sc

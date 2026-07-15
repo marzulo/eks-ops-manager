@@ -43,10 +43,10 @@ spec:
   mongodbResourceRef:
     name: rssearch
   roles:
-  - db: "admin"
-    name: "root"
-  - db: "admin"
-    name: "readWriteAnyDatabase"
+  - db: admin
+    name: root
+  - db: admin
+    name: readWriteAnyDatabase
 ---
 apiVersion: v1
 kind: Secret

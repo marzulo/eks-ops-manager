@@ -11,10 +11,18 @@ metadata:
   labels:
     app: mailpit
 spec:
+  tolerations:
+    - key: "workload"
+      operator: "Equal"
+      value: "arm"
+      effect: "NoSchedule"
+  nodeSelector:
+    group: ARM
+
   containers:
     - name: mailpit
-      ## image: ghcr.io/axllent/mailpit:v1.27.6@sha256:7496188a4de82d780b3cb4693367bb9791d9358660590dd746f6354d450107b0  ## ARM64
-      image: ghcr.io/axllent/mailpit:v1.27.6
+      image: ghcr.io/axllent/mailpit:v1.30.2@sha256:60ae914dde3ad75aaf153c65cdf4a4e76cb2b89abc3720f37340c2cc8271a2f7  ## ARM64
+      ## image: ghcr.io/axllent/mailpit:v1.30.2
       ports:
         - containerPort: 8025
         - containerPort: 1025
@@ -27,12 +35,12 @@ spec:
           value: "1"
       resources:
         requests:
-          cpu: 50m
-          memory: 64Mi
+          cpu: 250m
+          memory: 1Gi
           ephemeral-storage: 1Gi
         limits:
-          cpu: 200m
-          memory: 128Mi
+          cpu: 250m
+          memory: 1Gi
           ephemeral-storage: 2Gi
       volumeMounts:
         - name: work

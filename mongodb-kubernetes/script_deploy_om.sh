@@ -35,12 +35,12 @@ echo "AWS Profile: $param3"
 echo "Configuring kubectl"
 aws eks update-kubeconfig --region $param1 --name $param2 --profile $param3
 #export KUBECONFIG=~/.kube/config
-echo "Rollout MCK1.4.0"
+echo "Rollout MCK1.9.1"
 kubectl apply -f mongodb-init.yaml
 kubectl config set-context $(kubectl config current-context) --namespace=mongodb
 kubectl apply -f mongodb-storageclass-efs.yaml
-kubectl apply -f crds140.yaml
-kubectl apply -f mongodb-kubernetes140.yaml
+kubectl apply -f crds191.yaml
+kubectl apply -f mongodb-kubernetes191.yaml
 kubectl apply -f ../mailpit/mailpit-static.yaml
 kubectl apply -f ../mailpit/mailpit-loadbalancer.yaml
 echo "Wait 1 minutes to leave the Operator stabilize"
@@ -105,6 +105,7 @@ else
 fi
 kubectl get pods -A
 kubectl get svc -A
+## Enable to access locally on https://127.0.0.1:8443 - kubectl port-forward service/ops-manager-svc-ext 8443:8443
 #echo "Deploying Service Loadbalancer for OM"
 #kubectl apply -f mongodb-loadbalancer-om.yaml
 echo "Configuring RS for Backup and Search Configuration"
@@ -117,6 +118,10 @@ kubectl create secret tls search-rssearch-agent-certs --cert=tls/RS-rssearch-age
 kubectl create secret tls search-rssearch-clusterfile --cert=tls/RS-rssearch.crt --key=tls/RS-test-server.key --dry-run=client -o yaml | kubectl apply -f -
 
 kubectl create configmap custom-ca --from-file=ca-pem="tls/mms-ca.crt" --dry-run=client -o yaml | kubectl apply -f -
+
+kubectl create configmap search-ca --from-file=ca-pem=tls/test-CA.pem --from-file=mms-ca.crt=tls/mms-ca.crt  --from-file=ca.crt=tls/mms-ca.crt --dry-run=client -o yaml | kubectl apply -f -
+kubectl create secret tls mongot-rssearch-search-cert --cert=tls/RS-searcht.crt --key=tls/RS-test-server.key --dry-run=client -o yaml | kubectl apply -f -
+kubectl create secret tls rssearch-search-cert --cert=tls/RS-searcht.crt --key=tls/RS-test-server.key --dry-run=client -o yaml | kubectl apply -f -
 
 ### config the project configmap on ops manager and update mongodb-configmap-rsbackup.yaml
 ## Create a project rsbackup and organization api key on om
@@ -173,7 +178,7 @@ kubectl apply -f mongodb-backupuser-rsbackup.yaml
 
 echo "Enabling Backup on OM"
 kubectl apply -f mongodb-om-tls-backup.yaml
-sleep 30
+sleep 180
 kubectl wait --for=condition=Ready pod/ops-manager-backup-daemon-0 --timeout=300s
 if [ $? -eq 0 ]; then
   echo "ops-manager-backup-daemon-0 deployed"
@@ -199,4 +204,4 @@ echo "Type './script_deploy_search.sh $param1 $param2 $param3' to deploy Replica
 ### echo "Getting Load Balancer URL for sharded cluster"
 ### lbrssvcurl=`kubectl get svc mongodb-sharded-mongos-0-svc-external -o json | jq -r '.status.loadBalancer.ingress[0].hostname'`
 ### shardurl="mongodb://backupuser:mongod123XMONGOD123x@$lbrssvcurl:27017/"
-### echo "mongosh \"$mongoshurl\""
+### echo "mongosh \"$shardurl\""

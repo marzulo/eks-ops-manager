@@ -69,6 +69,6 @@ module "efs" {
 resource "local_file" "opsmanagersc_yaml" {
   filename = "${path.cwd}/../mongodb-kubernetes/mongodb-storageclass-efs.yaml"
   content = templatefile("${path.cwd}/../mongodb-kubernetes/mongodb-storageclass-efs.tmpl.yaml", {
-    fileSystemId     = module.efs.id
+    fileSystemId = module.efs.id
   })
 }

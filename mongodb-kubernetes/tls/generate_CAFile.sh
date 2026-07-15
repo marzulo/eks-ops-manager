@@ -25,7 +25,10 @@ cat RS-test-server1.crt RS-test-server.key > test-RS.pem
 cat RS-test-serverom.crt RS-test-server.key > test-OM.pem
 ## Adding mongodb CA
 openssl s_client -showcerts -verify 2 -connect downloads.mongodb.com:443 -servername downloads.mongodb.com < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="cert"a".crt"; print >out}'
-cat test-CA.pem cert2.crt cert3.crt  > mms-ca.crt
+cat test-CA.pem cert2.crt cert3.crt > mms-ca.crt
+
+openssl s_client -showcerts -verify 2 -connect ai.mongodb.com:443 -servername ai.mongodb.com < /dev/null | awk '/BEGIN/,/END/{ if(/BEGIN/){a++}; out="certa"a".crt"; print >out}'
+cat test-CA.pem cert2.crt cert3.crt certa2.crt certa3.crt > mms-ca-ai.crt
 
 ## To delete cleanup: rm *.crt *.csr *.key *.srl *.pem
 
@@ -46,3 +49,9 @@ openssl x509 -sha256 -req -days 365 -in RS-rssearch-agent.csr -CA CA-test-ia.crt
 
 cat RS-rssearch.crt RS-test-server.key > test-rssearch.pem
 cat RS-rssearch-agent.crt RS-test-server.key > test-rssearch-agent.pem
+
+## generating rssearch for Search certificates
+openssl req -new -key RS-test-server.key -out RS-searcht.csr -config openssl-searcht.cnf -batch
+openssl x509 -sha256 -req -days 365 -in RS-searcht.csr -CA CA-test-ia.crt -CAkey CA-test-ia.key -CAcreateserial -out RS-searcht.crt -extfile openssl-searcht.cnf -extensions v3_req
+
+cat RS-searcht.crt RS-test-server.key > test-searcht.pem

@@ -6,7 +6,7 @@ metadata:
 spec:
   topology: SingleCluster
   replicas: 1
-  version: 8.0.14
+  version: 8.0.25
   adminCredentials: adminusercredentials
 
   externalConnectivity:
@@ -18,22 +18,76 @@ spec:
       ca: "ca-issuer"
 
   applicationDatabase:
-    featureCompatibilityVersion: "8.2"
+    featureCompatibilityVersion: "8.0"
     members: 3
     passwordSecretKeyRef:
       key: password
       name: opsmanagereks-db-om-password
     topology: SingleCluster
-    version: 8.2.0-ent
+    version: 8.0.26-ent
     security:
       certsSecretPrefix: "appdb"
       tls:
         ca: "ca-issuer"
 
+    agent:
+      logLevel: INFO
+      startupOptions:
+        maxLogFiles: "10"
+        maxLogFileSize: "1000000"  ## 1GB
+        maxUncompressedLogFiles: "2"
+        maxLogFileDurationHrs: "24"
+
+      mongod:
+        logRotate:
+          sizeThresholdMB: "1000"  ## 1GB
+          timeThresholdHrs: 24
+          numTotal: 5
+          numUncompressed: 2
+          percentOfDiskspace: "0.02"
+
+      monitoringAgent:
+        logRotate:
+          sizeThresholdMB: 200
+          timeThresholdHrs: 24
+
+    podSpec:
+      podTemplate:
+        metadata:
+          labels:
+            name: ops-manager-db
+            group: "ARM"
+        spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: "group"
+                    operator: In
+                    values:
+                    - "ARM"
+          tolerations:
+          - key: "workload"
+            operator: "Equal"
+            value: "arm"
+            effect: "NoSchedule"
+          containers:
+          - name: mongod
+            resources:
+              limits:
+                memory: 4Gi
+                cpu: "1"
+              requests:
+                memory: 4Gi
+                cpu: "1"
+
   backup :
     enabled: true
     externalServiceEnabled: false
     members: 1
+
+    assignmentLabels: ["new"]
 
     headDB:
       storage: "5Gi"
@@ -61,10 +115,23 @@ spec:
         name: rsbackup
       mongodbUserRef:
         name: backupuser
+    - name: s3ImmutblockStore
+      irsaEnabled: true
+      assignmentLabels: ["immutable"]
+      pathStyleAccessEnabled: true
+      s3BucketEndpoint: ${s3ImmutBucketEndpoint}
+      s3BucketName: ${s3ImmutBucketName}
+      objectLockEnabled: true
+      mongodbResourceRef:
+        name: rsbackup
+      mongodbUserRef:
+        name: backupuser
 
   configuration:
     mms.ignoreInitialUiSetup: "true"
     mms.centralUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
+    ##mms.agentCentralUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
+    ##mms.backupCentralUrl: https://ops-manager-svc.mongodb.svc.cluster.local:8443
     mms.adminEmailAddr: a@b.com
     mms.fromEmailAddr: a@b.com
     mms.mail.hostname: mailpit-svc-ext.mailpit.svc.cluster.local
@@ -79,18 +146,38 @@ spec:
     mms.mongoDbUsage.defaultUsageType: DEV_SERVER
     mms.featureFlag.disableDiscoveryIpAddressAliases: "enabled"
     mongodb.release.autoDownload.enterprise: "true"
+    brs.immutableBackupEnabled: "true"
     #automation.versions.source: mongodb
 
   statefulSet:
     spec:
       template:
         spec:
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                    - key: group
+                      operator: In
+                      values:
+                        - X86
           containers:
             - name: mongodb-ops-manager
               resources:
                 requests:
-                  cpu: "0.5"
-                  memory: "2Gi"
+                  cpu: "2"
+                  memory: "8Gi"
                 limits:
-                  cpu: "1"
-                  memory: "4Gi"
+                  cpu: "2"
+                  memory: "8Gi"
+      volumeClaimTemplates:
+      - metadata:
+          name: data
+        spec:
+          accessModes:
+          - ReadWriteOnce
+          resources:
+            requests:
+              storage: 60Gi
+          storageClassName: efs-sc

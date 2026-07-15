@@ -6,11 +6,11 @@ metadata:
 spec:
   topology: SingleCluster
   replicas: 1
-  version: 8.0.14
+  version: 8.0.25
   adminCredentials: adminusercredentials
 
   externalConnectivity:
-    type: LoadBalancer
+    type: NodePort
 
   #security:
   #  certsSecretPrefix: "om"
@@ -18,13 +18,13 @@ spec:
   #    ca: "ca-issuer"
 
   applicationDatabase:
-    featureCompatibilityVersion: "8.2"
+    featureCompatibilityVersion: "8.0"
     members: 3
     passwordSecretKeyRef:
       key: password
       name: opsmanagereks-db-om-password
     topology: SingleCluster
-    version: 8.2.0-ent
+    version: 8.0.26-ent
     #security:
     #  certsSecretPrefix: "appdb"
     #  tls:
@@ -56,15 +56,15 @@ spec:
     spec:
       template:
         spec:
-#          affinity:
-#            nodeAffinity:
-#              requiredDuringSchedulingIgnoredDuringExecution:
-#                nodeSelectorTerms:
-#                  - matchExpressions:
-#                    - key: group
-#                      operator: In
-#                      values:
-#                        - ARM
+          affinity:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                    - key: group
+                      operator: In
+                      values:
+                        - X86
           containers:
           - name: mongodb-ops-manager
             resources:
@@ -72,8 +72,8 @@ spec:
                 cpu: "1"
                 memory: 4Gi
               requests:
-                cpu: "0.5"
-                memory: 1Gi
+                cpu: "1"
+                memory: 4Gi
           metadata:
             annotations:
               key1: value1

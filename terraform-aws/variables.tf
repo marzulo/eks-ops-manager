@@ -30,20 +30,34 @@ variable "region" {
 variable "cluster_version" {
   description = "EKS cluster version."
   type        = string
-  default     = "1.31"
+  default     = "1.36"
 }
 
 variable "ami_release_version" {
   description = "Default EKS AMI release version for node groups"
   type        = string
-  default     = "1.31.7-20250620"
+  default     = "1.36.2-20260625"
 }
 
-variable "ami_ami_type" {
+variable "ami_ami_type_x86" {
   ### https://github.com/awslabs/amazon-eks-ami/releases
   description = "Default EKS AMI AMI Type for Karpenter on node groups"
   type        = string
   default     = "AL2023_x86_64_STANDARD"
+}
+
+variable "ami_ami_type_arm" {
+  ### https://github.com/awslabs/amazon-eks-ami/releases
+  description = "Default EKS AMI AMI Type for Karpenter on node groups"
+  type        = string
+  default     = "AL2023_ARM_64_STANDARD"
+}
+
+variable "ami_ami_type_nvidia" {
+  ### https://github.com/awslabs/amazon-eks-ami/releases
+  description = "Default EKS AMI AMI Type for Karpenter on node groups"
+  type        = string
+  default     = "AL2023_x86_64_NVIDIA"
 }
 
 variable "vpc_cidr" {

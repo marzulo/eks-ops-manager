@@ -63,6 +63,9 @@ module "eks" {
     }
     kube-proxy = {
       most_recent = true
+      tags = merge(local.tags, {
+        "eks_addon" = "kube-proxy"
+      })
     }
     vpc-cni = {
       before_compute = true
@@ -89,7 +92,8 @@ module "eks" {
   subnet_ids = concat(module.vpc.private_subnets, module.vpc.public_subnets)
 
   eks_managed_node_group_defaults = {
-    instance_types = ["r7i.large", "r7i.xlarge"]
+    instance_types = ["r7i.large", "r7i.xlarge", "g6.xlarge", "g6.2xlarge", "m7g.xlarge", "m7g.2xlarge"]
+    tags           = local.tags
   }
 
   create_cluster_security_group = false
@@ -149,13 +153,22 @@ module "eks" {
       instance_types = ["r7i.xlarge", "r7i.2xlarge"]
       #force_update_version     = true
       release_version          = var.ami_release_version
-      ami_type                 = var.ami_ami_type
+      ami_type                 = var.ami_ami_type_x86
       use_name_prefix          = false
       create_iam_role          = false
       iam_role_arn             = aws_iam_role.role_node_eks.arn
       iam_role_use_name_prefix = false
-      disk_size                = 120
       ebs_optimized            = true
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 150
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      }
       iam_role_additional_policies = {
         ssm_access        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
         cloudwatch_access = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
@@ -165,10 +178,10 @@ module "eks" {
 
       min_size     = 1
       max_size     = 5
-      desired_size = 3
+      desired_size = 2
 
       update_config = {
-        max_unavailable_percentage = 100
+        max_unavailable_percentage = 33
       }
 
       labels = {
@@ -176,19 +189,86 @@ module "eks" {
         "${var.cluster_name}-default" = "yes"
         "group"                       = "X86"
       }
+      tags = local.tags
     }
 
-    /*arm = {
-      instance_types = ["r8g.xlarge", "r8g.2xlarge"]
+    /* To be enabled for VoyageAI CRD
+    nvidia = {
+      instance_types = ["g6f.xlarge", "g6f.2xlarge"]
+      #force_update_version     = true
+      release_version            = var.ami_release_version
+      ami_type                   = var.ami_ami_type_nvidia
+      use_name_prefix            = false
+      create_iam_role            = false
+      iam_role_arn               = aws_iam_role.role_node_eks.arn
+      iam_role_use_name_prefix   = false
+      ebs_optimized              = true
+      iam_role_additional_policies = {
+        ssm_access        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+        cloudwatch_access = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
+        service_role_ssm  = "arn:aws:iam::aws:policy/service-role/AmazonEC2RoleforSSM"
+        default_policy    = "arn:aws:iam::aws:policy/AmazonSSMManagedEC2InstanceDefaultPolicy"
+      }
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 150
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      }
+
+      min_size     = 1
+      max_size     = 2
+      desired_size = 1
+
+      update_config = {
+        max_unavailable_percentage = 100
+      }
+
+      taints = {
+        dedicated = {
+          key    = "workload"
+          value  = "nvidia"
+          effect = "NO_SCHEDULE"
+        }
+        gpu = {
+          key    = "nvidia.com/gpu"
+          value  = "true"
+          effect = "NO_SCHEDULE"
+        }
+      }
+
+      labels = {
+        "karpenter.sh/controller"     = "false"
+        "${var.cluster_name}-default" = "no"
+        "group"                       = "NVIDIA"
+      }
+      tags = local.tags
+    }*/
+
+    arm = {
+      instance_types = ["m7g.xlarge", "m7g.2xlarge"]
       #force_update_version     = true
       release_version          = var.ami_release_version
-      ami_type                 = var.ami_ami_type
+      ami_type                 = var.ami_ami_type_arm
       use_name_prefix          = false
       create_iam_role          = false
       iam_role_arn             = aws_iam_role.role_node_eks.arn
       iam_role_use_name_prefix = false
-      disk_size                = 120
       ebs_optimized            = true
+      block_device_mappings = {
+        xvda = {
+          device_name = "/dev/xvda"
+          ebs = {
+            volume_size           = 150
+            volume_type           = "gp3"
+            delete_on_termination = true
+          }
+        }
+      }
       iam_role_additional_policies = {
         ssm_access        = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
         cloudwatch_access = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy"
@@ -198,10 +278,18 @@ module "eks" {
 
       min_size     = 1
       max_size     = 5
-      desired_size = 3
+      desired_size = 4
 
       update_config = {
-        max_unavailable_percentage = 100
+        max_unavailable_percentage = 33
+      }
+
+      taints = {
+        dedicated = {
+          key    = "workload"
+          value  = "arm"
+          effect = "NO_SCHEDULE"
+        }
       }
 
       labels = {
@@ -209,7 +297,8 @@ module "eks" {
         "${var.cluster_name}-default" = "no"
         "group"                       = "ARM"
       }
-    }*/
+      tags = local.tags
+    }
   }
 
   #node_security_group_tags = merge(local.tags, {

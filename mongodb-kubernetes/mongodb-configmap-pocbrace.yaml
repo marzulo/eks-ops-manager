@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pocbrace
+  namespace: mongodb
+data:
+  baseUrl: http://ops-manager-svc.mongodb.svc.cluster.local:8080
+  projectName: pocbrace
+  orgId: 69986e995805737f93c2999b
+  #sslMMSCAConfigMap: ca-issuer
+  tlsRequireValidMMSServerCertificates: 'false'
+  sslRequireValidMMSServerCertificates: 'false'
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: organization-secret
+  namespace: mongodb
+stringData:
+  publicKey: ltdcnukl
+  privateKey: 13148093-41d9-4d96-b11e-33be4335b3b2
+---

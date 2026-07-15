@@ -23,5 +23,4 @@ metadata:
 type: Opaque
 stringData:
   password: "mongod123XMONGOD123x"
----
 #   password: UGFzc3dvcmQxMjMhUGFzc3dvcmQxMjMh # Password123!Password123!

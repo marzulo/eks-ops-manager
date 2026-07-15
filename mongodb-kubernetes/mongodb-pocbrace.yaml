@@ -1,0 +1,75 @@
+apiVersion: mongodb.com/v1
+kind: MongoDB
+metadata:
+  name: pocbrace
+  namespace: mongodb
+spec:
+  members: 3
+  version: "7.0.17-ent"
+  credentials: organization-secret
+  type: ReplicaSet
+  featureCompatibilityVersion: "7.0"
+  persistent: true
+
+  opsManager:
+    configMapRef:
+      name: pocbrace  # Must match metadata.name in ConfigMap file
+
+  security:
+    certsSecretPrefix: "dbaas"
+    authentication:
+      enabled: true
+      modes:
+      - "SCRAM"
+    tls:
+      ca: "pocbrace-ca"
+
+  externalAccess:
+    externalService:
+      spec:
+        type: LoadBalancer
+        publishNotReadyAddress: true
+        port: 27017
+
+  podSpec:
+    podTemplate:
+      metadata:
+        labels:
+          name: pocbrace
+        annotations:
+          service.io.cilium/global: "true"
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.8.1' ##MCK
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: 2
+            requests:
+              memory: 1Gi
+              cpu: 1
+
+    persistence:
+      single:
+        storage: 15Gi
+        storageClass: standard
+
+  additionalMongodConfig:
+    net:
+      tls:
+        mode: requireTLS
+        allowConnectionsWithoutCertificates: true
+      compression:
+        compressors: "snappy,zstd"
+    setParameter:
+      tlsWithholdClientCertificate: true
+
+#  connectivity:
+#    
+:
+#    - "pocbrace-svc-external": "172.19.255.200:27017"
+#    - "pocbrace-svc-external": "172.19.255.201:27017"
+#    - "pocbrace-svc-external": "172.19.255.202:27017"
+---

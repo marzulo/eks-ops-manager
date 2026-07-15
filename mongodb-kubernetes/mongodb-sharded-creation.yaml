@@ -9,8 +9,13 @@ spec:
       dialTimeoutSeconds: "40"
       maxLogFiles: "30"
 
+  credentials: organization-secret
+
+  mongodsPerShardCount: 3
+
   backup:
     mode: enabled
+    assignmentLabels: ["new"]
     snapshotSchedule:
       clusterCheckpointIntervalMin: 60
       dailySnapshotRetentionDays: 2
@@ -22,10 +27,12 @@ spec:
       weeklySnapshotRetentionWeeks: 0
 
   configServerCount: 1
+
   configSrv:
     additionalMongodConfig:
       systemLog:
         quiet: true
+
   configSrvPodSpec:
     persistence:
       single:
@@ -34,45 +41,79 @@ spec:
     podTemplate:
       metadata:
         labels:
-          env: sharded
-          group: arm
+          name: mongodb-sharded
+          group: "ARM"
       spec:
         containers:
         - name: mongodb-enterprise-database
+          ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.9.1' ##MCK
           resources:
             limits:
-              cpu: 300m
-              memory: 1G
+              memory: 2Gi
+              cpu: "0.5"
             requests:
-              cpu: 60m
-              memory: 600M
-  credentials: organization-secret
-  mongodsPerShardCount: 3
+              memory: 2Gi
+              cpu: "0.5"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: "group"
+                  operator: In
+                  values:
+                  - "ARM"
+        tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "arm"
+          effect: "NoSchedule"
+
+  mongosCount: 1
   mongos:
     additionalMongodConfig:
       systemLog:
         quiet: true
-  mongosCount: 1
   mongosPodSpec:
     podTemplate:
       metadata:
         labels:
-          env: sharded
-          group: arm
+          name: mongodb-sharded
+          group: "ARM"
       spec:
         containers:
         - name: mongodb-enterprise-database
+          ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.9.1' ##MCK
           resources:
             limits:
-              cpu: 1
-              memory: 3G
+              memory: 2Gi
+              cpu: "0.5"
             requests:
-              cpu: 0.5
-              memory: 2G
+              memory: 2Gi
+              cpu: "0.5"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: "group"
+                  operator: In
+                  values:
+                  - "ARM"
+        tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "arm"
+          effect: "NoSchedule"
+
   opsManager:
     configMapRef:
       name: mongodb-sharded-configmap
+
   persistent: true
+
   podSpec:
     persistence:
       single:
@@ -84,11 +125,25 @@ spec:
         - name: mongodb-enterprise-database
           resources:
             limits:
-              cpu: 1
-              memory: 1.5G
+              memory: 2Gi
+              cpu: "0.5"
             requests:
-              cpu: 0.5
-              memory: 1G
+              memory: 2Gi
+              cpu: "0.5"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: "group"
+                  operator: In
+                  values:
+                  - "ARM"
+        tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "arm"
+          effect: "NoSchedule"
         terminationGracePeriodSeconds: 10
         topologySpreadConstraints:
         - labelSelector: null
@@ -97,19 +152,23 @@ spec:
           maxSkew: 1
           topologyKey: zone
           whenUnsatisfiable: DoNotSchedule
+
   security:
     authentication:
       enabled: true
       ignoreUnknownUsers: true
       modes:
       - SCRAM
+
+  shardCount: 1
+
   shard:
     additionalMongodConfig:
       storage:
         directoryPerDB: true
       systemLog:
         quiet: true
-  shardCount: 1
+
   shardPodSpec:
     persistence:
       multiple:
@@ -120,25 +179,42 @@ spec:
           storage: 4Gi
           storageClass: efs-sc
         logs:
-          storage: 4Gi
+          storage: 8Gi
           storageClass: efs-sc
     podTemplate:
       metadata:
         labels:
-          env: sharded
-          group: arm
+          name: mongodb-sharded
+          group: "ARM"
       spec:
         containers:
         - name: mongodb-enterprise-database
+          ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.9.1' ##MCK
           resources:
             limits:
-              cpu: "2"
-              memory: 3G
+              memory: 2Gi
+              cpu: "0.5"
             requests:
-              cpu: "1"
-              memory: 2G
+              memory: 2Gi
+              cpu: "0.5"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: "group"
+                  operator: In
+                  values:
+                  - "ARM"
+        tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "arm"
+          effect: "NoSchedule"
+
   type: ShardedCluster
-  version: 8.2.0-ent
+  version: 8.3.4-ent
 
   externalAccess:
     externalService:
@@ -151,6 +227,7 @@ apiVersion: mongodb.com/v1
 kind: MongoDBUser
 metadata:
   name: backupusersharded
+  namespace: mongodb
 spec:
   username: backupuser
   db: "admin"

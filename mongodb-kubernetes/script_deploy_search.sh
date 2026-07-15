@@ -82,13 +82,13 @@ cat <<EOF >> mongodb-rssearch-creation.yaml
 EOF
 kubectl apply -f mongodb-rssearch-creation.yaml
 
-mongoshurl="mongodb://rssearch-admin:mongod123XMONGOD123x@$lbsvcurl0:27017,$lbsvcurl1:27017,$lbsvcurl2:27017/?tls=true&tlsCAFile=tls/test-CA.pem&tlsCertificateKeyFile=tls/test-rsbackup.pem&tlsAllowInvalidCertificates=true&replicaSet=rssearch"
+mongoshurl="mongodb://rssearch-admin:mongod123XMONGOD123x@$lbsvcurl0:27017,$lbsvcurl1:27017,$lbsvcurl2:27017/?tls=true&tlsCAFile=tls/test-CA.pem&tlsCertificateKeyFile=tls/test-rssearch.pem&tlsAllowInvalidCertificates=true&replicaSet=rssearch"
 
 kubectl get pods
 kubectl get svc
 
 echo "Type to connect:"
-echo "mongosh -u rssearch-admin -p mongod123XMONGOD123x --host $lbsvcurl0 --port 27017 --tls --tlsCAFile tls/test-CA.pem --tlsCertificateKeyFile tls/test-rsbackup.pem --tlsAllowInvalidCertificates"
+echo "mongosh -u rssearch-admin -p mongod123XMONGOD123x --host $lbsvcurl0 --port 27017 --tls --tlsCAFile tls/test-CA.pem --tlsCertificateKeyFile tls/test-rssearch.pem --tlsAllowInvalidCertificates"
 echo "or"
 echo "mongosh \"$mongoshurl\""
 
@@ -96,6 +96,20 @@ echo "Deploying Search service"
 
 kubectl apply -f mongodb-search.yaml
 sleep 120
-kubectl wait --for=condition=Ready pod/rssearch-search-0 --timeout=300s
+kubectl wait --for=condition=Ready pod/rssearch-search-0-0 --timeout=300s
+
+echo "Deploying Prometheus and Grafana service"
+kubectl apply -f prometheus-configmap.yaml
+sleep 30
+kubectl wait --for=condition=Available deployment/prometheus-server --timeout=300s
+kubectl create configmap grafana-dashboards-json  --from-file=mongodb-dashboard.json=./mongot-drilldown.json -n mongodb  --dry-run=client -o yaml | kubectl apply -f -
+kubectl apply -f grafana-deployment.yaml
+kubectl wait --for=condition=Available deployment/grafana --timeout=300s
+
+lbgrafana=`kubectl get svc grafana-svc -o json | jq -r '.status.loadBalancer.ingress[0].hostname'`
+lbprometh=`kubectl get svc prometheus-server -o json | jq -r '.status.loadBalancer.ingress[0].hostname'`
+
+echo "Prometheus URL: http://$lbprometh:9090"
+echo "Grafana URL: http://$lbgrafana:3000 - admin/admin"
 
 echo "Finish."
