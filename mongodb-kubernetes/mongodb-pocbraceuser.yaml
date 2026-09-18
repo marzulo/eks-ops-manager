@@ -1,0 +1,15 @@
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: pocbrace-admin
+spec:
+  username: pocbrace-admin
+  db: admin
+  mongodbResourceRef:
+    name: pocbrace
+  passwordSecretKeyRef:
+    name: opsmanagereks-db-om-password # mongod123XMONGOD123x
+    key: password
+  roles:
+  - name: root
+    db: admin

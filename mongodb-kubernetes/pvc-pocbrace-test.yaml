@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: data-pocbrace-0
+spec:
+  storageClassName: efs-sc
+  dataSource:
+    name: data-rssearch-0
+    kind: PersistentVolumeClaim
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests: { storage: 100Gi }

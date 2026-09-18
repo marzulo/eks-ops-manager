@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: voyage-api-keys
+  namespace: mongodb
+stringData:
+  indexing-key: "al-keycreatedforindex"
+  query-key: "al-keycreatedforquery"
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBSearch
+metadata:
+  name: rssearch
+  namespace: mongodb
+spec:
+  source:
+    mongodbResourceRef:
+      name: rssearch
+
+  clusters:
+    - replicas: 1
+
+      resourceRequirements:
+        limits:
+          cpu: "1"
+          memory: 4G
+          ephemeral-storage: 1G
+        requests:
+          cpu: "1"
+          memory: 4G
+
+      persistence:
+        single:
+          storage: 8Gi
+          storageClass: efs-sc
+
+      statefulSet:
+        spec:
+          template:
+            spec:
+              affinity:
+                nodeAffinity:
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                      - matchExpressions:
+                          - key: "group"
+                            operator: In
+                            values:
+                              - "X86"
+
+  logLevel: "DEBUG"
+
+  #version: "1.70.1"
+
+  security:
+    tls:
+      certsSecretPrefix: "mongot"
+
+  autoEmbedding:
+    providerEndpoint: https://ai.mongodb.com/v1/embeddings
+    embeddingModelAPIKeySecret:
+      name: voyage-api-keys
+
+  observability:
+    prometheus:
+      port: 9946

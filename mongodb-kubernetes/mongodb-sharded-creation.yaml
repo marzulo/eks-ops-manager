@@ -1,0 +1,254 @@
+apiVersion: mongodb.com/v1
+kind: MongoDB
+metadata:
+  name: mongodb-sharded
+  namespace: mongodb
+spec:
+  agent:
+    startupOptions:
+      dialTimeoutSeconds: "40"
+      maxLogFiles: "30"
+
+  credentials: organization-secret
+
+  mongodsPerShardCount: 3
+
+  backup:
+    mode: enabled
+    assignmentLabels: ["new"]
+    snapshotSchedule:
+      clusterCheckpointIntervalMin: 60
+      dailySnapshotRetentionDays: 2
+      fullIncrementalDayOfWeek: "SUNDAY" 
+      monthlySnapshotRetentionMonths: 0
+      pointInTimeWindowHours: 1
+      snapshotIntervalHours: 24
+      snapshotRetentionDays: 2
+      weeklySnapshotRetentionWeeks: 0
+
+  configServerCount: 1
+
+  configSrv:
+    additionalMongodConfig:
+      systemLog:
+        quiet: true
+
+  configSrvPodSpec:
+    persistence:
+      single:
+        storage: 4Gi
+        storageClass: efs-sc
+    podTemplate:
+      metadata:
+        labels:
+          name: mongodb-sharded
+          group: "ARM"
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.12.0' ##MCK
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: "0.5"
+            requests:
+              memory: 2Gi
+              cpu: "0.5"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: "group"
+                  operator: In
+                  values:
+                  - "ARM"
+        tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "arm"
+          effect: "NoSchedule"
+
+  mongosCount: 1
+  mongos:
+    additionalMongodConfig:
+      systemLog:
+        quiet: true
+  mongosPodSpec:
+    podTemplate:
+      metadata:
+        labels:
+          name: mongodb-sharded
+          group: "ARM"
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.12.0' ##MCK
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: "0.5"
+            requests:
+              memory: 2Gi
+              cpu: "0.5"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: "group"
+                  operator: In
+                  values:
+                  - "ARM"
+        tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "arm"
+          effect: "NoSchedule"
+
+  opsManager:
+    configMapRef:
+      name: mongodb-sharded-configmap
+
+  persistent: true
+
+  podSpec:
+    persistence:
+      single:
+        storage: 5Gi
+        storageClass: efs-sc
+    podTemplate:
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: "0.5"
+            requests:
+              memory: 2Gi
+              cpu: "0.5"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: "group"
+                  operator: In
+                  values:
+                  - "ARM"
+        tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "arm"
+          effect: "NoSchedule"
+        terminationGracePeriodSeconds: 10
+        topologySpreadConstraints:
+        - labelSelector: null
+          matchLabels:
+            foo: bar
+          maxSkew: 1
+          topologyKey: zone
+          whenUnsatisfiable: DoNotSchedule
+
+  security:
+    authentication:
+      enabled: true
+      ignoreUnknownUsers: true
+      modes:
+      - SCRAM
+
+  shardCount: 1
+
+  shard:
+    additionalMongodConfig:
+      storage:
+        directoryPerDB: true
+      systemLog:
+        quiet: true
+
+  shardPodSpec:
+    persistence:
+      multiple:
+        data:
+          storage: 8Gi
+          storageClass: efs-sc
+        journal:
+          storage: 4Gi
+          storageClass: efs-sc
+        logs:
+          storage: 8Gi
+          storageClass: efs-sc
+    podTemplate:
+      metadata:
+        labels:
+          name: mongodb-sharded
+          group: "ARM"
+      spec:
+        containers:
+        - name: mongodb-enterprise-database
+          ##image: 'quay.io/mongodb/mongodb-enterprise-database-ubi:1.33.0' ##MEKO
+          image: 'quay.io/mongodb/mongodb-kubernetes-database:1.12.0' ##MCK
+          resources:
+            limits:
+              memory: 2Gi
+              cpu: "0.5"
+            requests:
+              memory: 2Gi
+              cpu: "0.5"
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+              - matchExpressions:
+                - key: "group"
+                  operator: In
+                  values:
+                  - "ARM"
+        tolerations:
+        - key: "workload"
+          operator: "Equal"
+          value: "arm"
+          effect: "NoSchedule"
+
+  type: ShardedCluster
+  version: 8.3.11-ent
+
+  externalAccess:
+    externalService:
+      spec:
+        type: LoadBalancer
+        publishNotReadyAddress: true
+        port: 27017
+---
+apiVersion: mongodb.com/v1
+kind: MongoDBUser
+metadata:
+  name: backupusersharded
+  namespace: mongodb
+spec:
+  username: backupuser
+  db: "admin"
+  passwordSecretKeyRef:
+      key: password
+      name: opsmanagereks-db-om-password # mongod123XMONGOD123x
+  mongodbResourceRef:
+    name: mongodb-sharded
+  roles:
+  - db: "admin"
+    name: "clusterAdmin"
+  - db: "admin"
+    name: "backup"
+  - db: "admin"
+    name: "dbAdminAnyDatabase"
+  - db: "admin"
+    name: "hostManager"
+  - db: "admin"
+    name: "restore"
+  - db: "admin"
+    name: "root"
+  - db: "admin"
+    name: "readWriteAnyDatabase"
+---

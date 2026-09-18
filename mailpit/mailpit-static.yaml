@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mailpit
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mailpit
+  namespace: mailpit
+  labels:
+    app: mailpit
+spec:
+  tolerations:
+    - key: "workload"
+      operator: "Equal"
+      value: "arm"
+      effect: "NoSchedule"
+  nodeSelector:
+    group: ARM
+
+  containers:
+    - name: mailpit
+      image: ghcr.io/axllent/mailpit:v1.30.2@sha256:60ae914dde3ad75aaf153c65cdf4a4e76cb2b89abc3720f37340c2cc8271a2f7  ## ARM64
+      ## image: ghcr.io/axllent/mailpit:v1.30.2
+      ports:
+        - containerPort: 8025
+        - containerPort: 1025
+      env:
+        - name: MP_MAX_MESSAGES
+          value: "5000"
+        - name: MP_SMTP_AUTH_ACCEPT_ANY
+          value: "1"
+        - name: MP_SMTP_AUTH_ALLOW_INSECURE
+          value: "1"
+      resources:
+        requests:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 1Gi
+        limits:
+          cpu: 250m
+          memory: 1Gi
+          ephemeral-storage: 2Gi
+      volumeMounts:
+        - name: work
+          mountPath: /work
+  volumes:
+    - name: work
+      emptyDir:
+        sizeLimit: 2Gi
